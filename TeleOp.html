@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <title>__PAGE_TITLE__ · REBUILT 2026</title>
+
+    <link rel="stylesheet" href="scout.css">
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root{
+            --steel-900:#11151a;
+            --steel-800:#1b2127;
+            --steel-700:#262e36;
+            --steel-600:#3a4450;
+            --blueprint:#dd7f7f;
+            --fuel:#ee3f3f;
+            --rust:#c1462f;
+            --paper:#eef1ef;
+            --paper-dim:#93a0a6;
+            --radius:4px;
+        }
+
+        *{ box-sizing:border-box; }
+        html, body{ margin:0; }
+        body{
+            background:var(--steel-900);
+            color:var(--paper);
+            font-family:'Inter', system-ui, sans-serif;
+            -webkit-font-smoothing:antialiased;
+        }
+        a{ color:var(--blueprint); text-decoration:none; }
+
+        /* ===================== NAVBAR ===================== */
+        .app-navbar{
+            background:var(--steel-800);
+            border-bottom:1px solid var(--steel-600);
+            padding:.7rem 0;
+        }
+        .navbar-accent{
+            height:3px;
+            background:linear-gradient(90deg, var(--rust), var(--fuel), var(--blueprint));
+        }
+        .navbar-brand{
+            font-family:'Oswald', sans-serif;
+            font-weight:600;
+            text-transform:uppercase;
+            letter-spacing:.05em;
+            color:var(--paper) !important;
+            display:flex;
+            align-items:baseline;
+            gap:10px;
+        }
+        .brand-tag{
+            font-family:'IBM Plex Mono', monospace;
+            font-weight:500;
+            font-size:.68rem;
+            letter-spacing:.06em;
+            color:var(--fuel);
+            text-transform:none;
+        }
+        @media (max-width:480px){ .brand-tag{ display:none; } }
+
+        .custom-toggler{
+            background:none;
+            border:none;
+            width:38px;
+            height:34px;
+            padding:0;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            gap:5px;
+            cursor:pointer;
+        }
+        .custom-toggler:focus{ outline:none; }
+        .custom-toggler .bar{
+            display:block;
+            width:24px;
+            height:2px;
+            background:var(--paper);
+            border-radius:1px;
+            transition:transform .25s ease, opacity .25s ease;
+        }
+        .custom-toggler.is-open .bar:nth-child(1){ transform:translateY(7px) rotate(45deg); }
+        .custom-toggler.is-open .bar:nth-child(2){ opacity:0; }
+        .custom-toggler.is-open .bar:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+
+        .app-navbar .nav-link{
+            font-family:'Inter', sans-serif;
+            font-weight:500;
+            font-size:.92rem;
+            color:var(--paper-dim) !important;
+            padding:.55rem .9rem !important;
+            position:relative;
+        }
+        .app-navbar .nav-link::after{
+            content:'';
+            position:absolute;
+            left:.9rem; right:.9rem; bottom:2px;
+            height:2px;
+            background:var(--fuel);
+            transform:scaleX(0);
+            transform-origin:left;
+            transition:transform .2s ease;
+        }
+        .app-navbar .nav-link:hover{ color:var(--paper) !important; }
+        .app-navbar .nav-link:hover::after,
+        .app-navbar .nav-link.active::after{ transform:scaleX(1); }
+        .app-navbar .nav-link.active{ color:var(--paper) !important; }
+
+        .dropdown-menu.event-menu{
+            background:var(--steel-800);
+            border:1px solid var(--steel-600);
+            border-radius:6px;
+            padding:10px;
+            min-width:270px;
+            box-shadow:0 14px 30px rgba(0,0,0,.45);
+        }
+        .event-menu-label{
+            font-family:'Inter', sans-serif;
+            font-weight:600;
+            font-size:.66rem;
+            letter-spacing:.09em;
+            text-transform:uppercase;
+            color:var(--paper-dim);
+            padding:4px 10px;
+        }
+        .event-menu-divider{
+            height:1px;
+            background:var(--steel-600);
+            margin:8px 4px;
+        }
+        .event-row{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            width:100%;
+            background:none;
+            border:none;
+            color:var(--paper);
+            font-family:'Inter', sans-serif;
+            font-size:.875rem;
+            padding:9px 10px;
+            border-radius:var(--radius);
+            cursor:pointer;
+            text-align:left;
+        }
+        .event-row:hover{ background:var(--steel-700); }
+        .event-row.is-active{ background:rgba(245,166,35,.12); }
+        .event-dot{
+            width:8px; height:8px;
+            border-radius:50%;
+            border:2px solid var(--steel-600);
+            flex:0 0 auto;
+        }
+        .event-row.is-active .event-dot{ background:var(--fuel); border-color:var(--fuel); }
+        .event-name{ flex:1; }
+        .event-check{ opacity:0; color:var(--fuel); font-size:.8rem; }
+        .event-row.is-active .event-check{ opacity:1; }
+        .ranking-links{ display:flex; gap:14px; padding:4px 10px 6px; flex-wrap:wrap; }
+        .ranking-links a{ font-size:.84rem; color:var(--blueprint); }
+        .ranking-links a:hover{ color:var(--fuel); }
+        .ranking-links a.is-current{ color:var(--fuel); font-weight:600; }
+
+        @media (max-width:991.98px){
+            .dropdown-menu.event-menu{
+                position:static;
+                width:100%;
+                margin-top:8px;
+                box-shadow:none;
+            }
+        }
+
+        /* ===================== PAGE ===================== */
+        .scout-main{
+            max-width:980px;
+            margin:0 auto;
+            padding:32px 18px 90px;
+        }
+        .page-header{
+            display:flex;
+            justify-content:space-between;
+            align-items:flex-end;
+            flex-wrap:wrap;
+            gap:12px;
+            border-bottom:2px solid var(--steel-600);
+            padding-bottom:16px;
+            margin-bottom:28px;
+        }
+        .page-title{
+            font-family:'Oswald', sans-serif;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            font-weight:600;
+            font-size:clamp(1.6rem, 4vw, 2.2rem);
+            margin:0;
+            color:var(--paper);
+        }
+        .event-subtitle{
+            margin:6px 0 0;
+            color:var(--paper-dim);
+            font-size:.9rem;
+        }
+        .event-subtitle span{ color:var(--fuel); font-weight:600; }
+        .season-plate{
+            font-family:'IBM Plex Mono', monospace;
+            font-size:.72rem;
+            letter-spacing:.08em;
+            color:var(--paper-dim);
+            border:1px solid var(--steel-600);
+            padding:5px 10px;
+            border-radius:2px;
+            white-space:nowrap;
+        }
+
+        .panel{
+            background:var(--steel-800);
+            border:1px solid var(--steel-600);
+            border-radius:6px;
+            padding:22px;
+            margin-bottom:24px;
+            box-shadow:0 4px 16px rgba(0,0,0,.25);
+        }
+        .panel-eyebrow{
+            font-family:'Inter', sans-serif;
+            font-weight:600;
+            font-size:.7rem;
+            letter-spacing:.1em;
+            text-transform:uppercase;
+            color:var(--fuel);
+            margin:0 0 4px;
+        }
+        .panel-hint{
+            color:var(--paper-dim);
+            font-size:.82rem;
+            margin:0 0 18px;
+        }
+
+        .field label{
+            display:block;
+            font-family:'Inter', sans-serif;
+            font-weight:600;
+            font-size:.72rem;
+            letter-spacing:.06em;
+            text-transform:uppercase;
+            color:var(--paper-dim);
+            margin-bottom:6px;
+        }
+        .field select,
+        .field input[type=number],
+        .field input[type=text],
+        .field textarea{
+            width:100%;
+            background:var(--steel-900);
+            border:1px solid var(--steel-600);
+            color:var(--paper);
+            font-family:'Inter', sans-serif;
+            font-size:.95rem;
+            padding:10px 12px;
+            border-radius:var(--radius);
+        }
+        .field textarea{ resize:vertical; }
+        .field select{
+            appearance:none; -webkit-appearance:none; -moz-appearance:none;
+            background-image:
+                linear-gradient(45deg, transparent 50%, var(--paper-dim) 50%),
+                linear-gradient(135deg, var(--paper-dim) 50%, transparent 50%);
+            background-position: calc(100% - 18px) center, calc(100% - 13px) center;
+            background-size:5px 5px, 5px 5px;
+            background-repeat:no-repeat;
+            padding-right:36px;
+        }
+        .field select:focus,
+        .field input:focus,
+        .field textarea:focus{
+            outline:none;
+            border-color:var(--fuel);
+            box-shadow:0 0 0 3px rgba(245,166,35,.2);
+        }
+        .field ::placeholder{ color:var(--paper-dim); opacity:.7; }
+        .field-narrow{ max-width:320px; }
+
+        .step-btn:focus-visible,
+        .field select:focus-visible,
+        .field input:focus-visible,
+        .field textarea:focus-visible{
+            outline:2px solid var(--fuel);
+            outline-offset:2px;
+        }
+
+        @media (prefers-reduced-motion:reduce){
+            *{ transition:none !important; animation:none !important; }
+        }
+
+        .app-toast{
+            position:fixed;
+            left:50%;
+            bottom:28px;
+            transform:translate(-50%, 12px);
+            background:var(--steel-700);
+            border:1px solid var(--steel-600);
+            color:var(--paper);
+            font-family:'Inter', sans-serif;
+            font-size:.88rem;
+            padding:12px 18px;
+            border-radius:6px;
+            box-shadow:0 10px 26px rgba(0,0,0,.45);
+            opacity:0;
+            transition:opacity .25s ease, transform .25s ease;
+            z-index:1000;
+            max-width:90vw;
+            text-align:center;
+        }
+        .app-toast.is-visible{ opacity:1; transform:translate(-50%, 0); }
+        .app-toast.is-error{ border-color:var(--rust); color:#ffd9d0; }
+
+        .table-scroll{ overflow-x:auto; }
+        .results-table{ width:100%; border-collapse:collapse; min-width:560px; }
+        .results-table th{
+            text-align:left;
+            font-family:'Inter', sans-serif;
+            font-weight:600;
+            font-size:.68rem;
+            letter-spacing:.07em;
+            text-transform:uppercase;
+            color:var(--paper-dim);
+            padding:0 10px 10px;
+            border-bottom:1px solid var(--steel-600);
+            white-space:nowrap;
+        }
+        .results-table td{
+            padding:10px;
+            border-bottom:1px solid var(--steel-700);
+            font-size:.88rem;
+            vertical-align:top;
+        }
+        .results-table tr:last-child td{ border-bottom:none; }
+        .results-table .num-cell{
+            font-family:'IBM Plex Mono', monospace;
+            font-weight:600;
+            white-space:nowrap;
+        }
+        .results-table .metric-cell{ color:var(--fuel); }
+        .results-table .empty-row td{
+            text-align:center;
+            color:var(--paper-dim);
+            padding:24px 10px;
+        }
+        .results-table tr.rank-1 td{
+            background:rgba(245,166,35,.07);
+            border-top:1px solid rgba(245,166,35,.25);
+            border-bottom:1px solid rgba(245,166,35,.25);
+        }
+        .results-table tr.rank-1 td:first-child{ border-left:3px solid var(--fuel); padding-left:7px; }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="scout.html">
+                694 SCOUTING WEBSITE <span class="brand-tag">REBUILT&nbsp;·&nbsp;2026</span>
+            </a>
+            <button class="custom-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent"
+                    aria-controls="navbarSupportedContent"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
+                <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="scout.html">
+                            Scout Match
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="teams.html">
+                            Team Search
+                        </a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle"
+                           href="#"
+                           role="button"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false">
+                            Events
+                        </a>
+
+                        <div class="dropdown-menu event-menu">
+                            <div class="event-menu-label">Current Event</div>
+                            <div id="eventList" class="event-list"></div>
+
+                            <div class="event-menu-divider"></div>
+
+                            <div class="event-menu-label">Rankings</div>
+                            <div class="ranking-links">
+                                <a href="TeleOp.html"__TELEOP_CURRENT__>TeleOp</a>
+                                <a href="Auto.html"__AUTO_CURRENT__>Autonomous</a>
+                                <a href="Total.html"__TOTAL_CURRENT__>Total</a>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="navbar-accent"></div>
+
+    <main class="scout-main">
+        <header class="page-header">
+            <div>
+                <h1 class="page-title">TeleOP RANKING</h1>
+                <p class="event-subtitle">Event: <span id="currentEventLabel">No event selected</span></p>
+            </div>
+            <div class="season-plate">REBUILT&nbsp;·&nbsp;2026</div>
+        </header>
+
+        <section class="panel context-panel">
+            <p class="panel-eyebrow">Filter</p>
+            <p class="panel-hint">Pick an event — or All Events — to rank every scouted team by __METRIC_LABEL__.</p>
+            <div class="field field-narrow">
+                <label for="eventSelect">Event</label>
+                <select id="eventSelect"></select>
+            </div>
+        </section>
+
+        <section class="panel results-panel" id="resultsPanel">
+            <p class="panel-eyebrow">__RESULTS_EYEBROW__</p>
+            <p class="panel-hint" id="resultsSummary"></p>
+            <div class="table-scroll">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Team</th>
+                            <th>Avg Auto</th>
+                            <th>Avg TeleOp</th>
+                            <th>Avg Total</th>
+                            <th>Matches</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const EVENTS = [
+            "Indiana Robotics Invitational",
+            "Chezy Champs",
+            "NYC Robo Replay",
+            "Brunswick Eruption"
+        ];
+        const STORAGE_KEY = "scout_currentEvent";
+        const REPORTS_KEY = "scout_matchReports";
+        const RANK_METRIC = "__METRIC_KEY__";
+        const METRIC_LABEL = "__METRIC_LABEL__";
+
+        function getCurrentEvent(){
+            return localStorage.getItem(STORAGE_KEY) || "";
+        }
+        function setCurrentEvent(name){
+            localStorage.setItem(STORAGE_KEY, name);
+            renderEventUI();
+            renderRankings();
+        }
+
+        function buildEventSelect(){
+            const select = document.getElementById('eventSelect');
+            select.innerHTML = '';
+            const allOpt = document.createElement('option');
+            allOpt.value = 'ALL';
+            allOpt.textContent = 'All Events';
+            select.appendChild(allOpt);
+            EVENTS.forEach(ev => {
+                const opt = document.createElement('option');
+                opt.value = ev;
+                opt.textContent = ev;
+                select.appendChild(opt);
+            });
+        }
+
+        function buildEventList(){
+            const list = document.getElementById('eventList');
+            list.innerHTML = '';
+            EVENTS.forEach(ev => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'event-row';
+                item.dataset.event = ev;
+                item.innerHTML =
+                    '<span class="event-dot"></span>' +
+                    '<span class="event-name"></span>' +
+                    '<span class="event-check">✓</span>';
+                item.querySelector('.event-name').textContent = ev;
+                item.addEventListener('click', () => setCurrentEvent(ev));
+                list.appendChild(item);
+            });
+        }
+
+        function renderEventUI(){
+            let current = getCurrentEvent();
+            if(!current) current = 'ALL';
+
+            const select = document.getElementById('eventSelect');
+            select.value = current;
+
+            document.querySelectorAll('.event-row').forEach(row => {
+                row.classList.toggle('is-active', row.dataset.event === current);
+            });
+
+            const sub = document.getElementById('currentEventLabel');
+            sub.textContent = (current === 'ALL') ? 'All Events' : current;
+        }
+
+        function getReports(){
+            try{ return JSON.parse(localStorage.getItem(REPORTS_KEY)) || []; }
+            catch(e){ return []; }
+        }
+
+        function escapeHtml(value){
+            const div = document.createElement('div');
+            div.textContent = (value === null || value === undefined || value === '') ? '—' : String(value);
+            return div.innerHTML;
+        }
+
+        function computeRankings(eventVal){
+            const reports = getReports().filter(r => eventVal === 'ALL' || r.event === eventVal);
+            const byTeam = {};
+            reports.forEach(r => {
+                const key = String(r.team || '').trim();
+                if(!key) return;
+                if(!byTeam[key]){
+                    byTeam[key] = { team: key, matches: 0, autoSum: 0, teleopSum: 0, totalSum: 0 };
+                }
+                byTeam[key].matches += 1;
+                byTeam[key].autoSum += (r.auto || 0);
+                byTeam[key].teleopSum += (r.teleop || 0);
+                byTeam[key].totalSum += (r.total || 0);
+            });
+            const rows = Object.values(byTeam).map(t => ({
+                team: t.team,
+                matches: t.matches,
+                avgAuto: t.autoSum / t.matches,
+                avgTeleop: t.teleopSum / t.matches,
+                avgTotal: t.totalSum / t.matches
+            }));
+            const metricKey = 'avg' + RANK_METRIC.charAt(0).toUpperCase() + RANK_METRIC.slice(1);
+            rows.sort((a, b) => {
+                if(b[metricKey] !== a[metricKey]) return b[metricKey] - a[metricKey];
+                return b.avgTotal - a.avgTotal;
+            });
+            return rows;
+        }
+
+        function renderRankings(){
+            const eventVal = document.getElementById('eventSelect').value;
+            const body = document.getElementById('resultsBody');
+            const summary = document.getElementById('resultsSummary');
+            const rows = computeRankings(eventVal);
+            body.innerHTML = '';
+
+            const eventLabel = (eventVal === 'ALL') ? 'across all events' : 'at ' + eventVal;
+
+            if(rows.length === 0){
+                summary.textContent = 'No scouting data recorded yet ' + eventLabel + '.';
+                const tr = document.createElement('tr');
+                tr.className = 'empty-row';
+                tr.innerHTML = '<td colspan="6">No teams ranked yet.</td>';
+                body.appendChild(tr);
+                return;
+            }
+
+            summary.textContent = 'Ranking ' + rows.length + ' team' + (rows.length === 1 ? '' : 's') +
+                ' ' + eventLabel + ' by ' + METRIC_LABEL + '.';
+
+            rows.forEach((r, idx) => {
+                const tr = document.createElement('tr');
+                if(idx === 0) tr.classList.add('rank-1');
+                const cls = (key) => (RANK_METRIC === key) ? 'num-cell metric-cell' : 'num-cell';
+                tr.innerHTML =
+                    '<td class="num-cell">' + (idx + 1) + '</td>' +
+                    '<td class="num-cell">' + escapeHtml(r.team) + '</td>' +
+                    '<td class="' + cls('auto') + '">' + r.avgAuto.toFixed(1) + '</td>' +
+                    '<td class="' + cls('teleop') + '">' + r.avgTeleop.toFixed(1) + '</td>' +
+                    '<td class="' + cls('total') + '">' + r.avgTotal.toFixed(1) + '</td>' +
+                    '<td class="num-cell">' + r.matches + '</td>';
+                body.appendChild(tr);
+            });
+        }
+
+        buildEventSelect();
+        buildEventList();
+        renderEventUI();
+        renderRankings();
+
+        document.getElementById('eventSelect').addEventListener('change', (e) => {
+            setCurrentEvent(e.target.value);
+        });
+
+        const toggler = document.querySelector('.custom-toggler');
+        const navCollapse = document.getElementById('navbarSupportedContent');
+        navCollapse.addEventListener('shown.bs.collapse', () => toggler.classList.add('is-open'));
+        navCollapse.addEventListener('hidden.bs.collapse', () => toggler.classList.remove('is-open'));
+    </script>
+</body>
+</html>
