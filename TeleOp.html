@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
-    <title>__PAGE_TITLE__ · REBUILT 2026</title>
+    <title>TeleOp Ranking · REBUILT 2026</title>
 
     <link rel="stylesheet" href="scout.css">
     <link
@@ -411,9 +411,9 @@
 
                             <div class="event-menu-label">Rankings</div>
                             <div class="ranking-links">
-                                <a href="TeleOp.html"__TELEOP_CURRENT__>TeleOp</a>
-                                <a href="Auto.html"__AUTO_CURRENT__>Autonomous</a>
-                                <a href="Total.html"__TOTAL_CURRENT__>Total</a>
+                                <a href="TeleOp.html" class="is-current">TeleOp</a>
+                                <a href="Auto.html">Autonomous</a>
+                                <a href="Total.html">Total</a>
                             </div>
                         </div>
                     </li>
@@ -472,8 +472,8 @@
         ];
         const STORAGE_KEY = "scout_currentEvent";
         const REPORTS_KEY = "scout_matchReports";
-        const RANK_METRIC = "__METRIC_KEY__";
-        const METRIC_LABEL = "__METRIC_LABEL__";
+        const RANK_METRIC = "teleop";
+        const METRIC_LABEL = "TeleOp";
 
         function getCurrentEvent(){
             return localStorage.getItem(STORAGE_KEY) || "";
