@@ -11,6 +11,11 @@
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
         rel="stylesheet">
 
+    <!-- Firebase: shared cloud storage so reports are visible to everyone -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -770,15 +775,13 @@
         navCollapse.addEventListener('shown.bs.collapse', () => toggler.classList.add('is-open'));
         navCollapse.addEventListener('hidden.bs.collapse', () => toggler.classList.remove('is-open'));
 
-        /* ---------- Save scout report ---------- */
-        const REPORTS_KEY = "scout_matchReports";
-
-        function getReports(){
-            try{ return JSON.parse(localStorage.getItem(REPORTS_KEY)) || []; }
-            catch(e){ return []; }
-        }
-        function saveReports(reports){
-            localStorage.setItem(REPORTS_KEY, JSON.stringify(reports));
+        /* ---------- Save scout report to the shared cloud database ---------- */
+        async function saveReport(report){
+            if(!window.db){
+                throw new Error('Firebase is not configured. Edit firebase-config.js.');
+            }
+            // Store each report as its own document keyed by its id.
+            await window.db.collection('reports').doc(report.id).set(report);
         }
 
         function sumRowInputs(rowEl){
@@ -801,7 +804,7 @@
             }, 2800);
         }
 
-        document.getElementById('submitReportBtn').addEventListener('click', () => {
+        document.getElementById('submitReportBtn').addEventListener('click', async () => {
             const eventVal = document.getElementById('eventSelect').value;
             const teamVal = document.getElementById('teamNumber').value.trim();
             const scoutVal = document.getElementById('scoutName').value.trim();
@@ -838,9 +841,23 @@
                 timestamp: new Date().toISOString()
             };
 
-            const reports = getReports();
-            reports.push(report);
-            saveReports(reports);
+            const submitBtn = document.getElementById('submitReportBtn');
+            submitBtn.disabled = true;
+            const originalLabel = submitBtn.textContent;
+            submitBtn.textContent = 'Saving…';
+
+            try {
+                await saveReport(report);
+            } catch (err) {
+                console.error(err);
+                showToast('Could not save to the shared database. ' + (err && err.message ? err.message : ''), true);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalLabel;
+                return;
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalLabel;
 
             showToast('Saved — Team ' + teamVal + ' · Auto ' + autoScore + ' · TeleOp ' + teleopScore + ' · Total ' + totalScore);
 
