@@ -44,12 +44,13 @@
    ============================================================= */
 
 const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_YOUR_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID"
+  apiKey: "AIzaSyB1T3I01Yrd-UvhuP470DTEZ24o635a13k",
+  authDomain: "scouting-21dc4.firebaseapp.com",
+  projectId: "scouting-21dc4",
+  storageBucket: "scouting-21dc4.firebasestorage.app",
+  messagingSenderId: "807747305531",
+  appId: "1:807747305531:web:087e0e6d4c2c670f811c1e",
+  measurementId: "G-ZJVV351MFF"
 };
 
 /* ---- Do not edit below this line ---- */
