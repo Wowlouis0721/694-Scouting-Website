@@ -4,12 +4,17 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="dark">
-    <title>Total Ranking · REBUILT 2026</title>
+    <title>__PAGE_TITLE__ · REBUILT 2026</title>
 
     <link rel="stylesheet" href="scout.css">
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
         rel="stylesheet">
+
+    <!-- Firebase: shared cloud storage so reports are visible to everyone -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -411,9 +416,9 @@
 
                             <div class="event-menu-label">Rankings</div>
                             <div class="ranking-links">
-                                <a href="TeleOp.html">TeleOp</a>
-                                <a href="Auto.html">Autonomous</a>
-                                <a href="Total.html" class="is-current">Total</a>
+                                <a href="TeleOp.html"__TELEOP_CURRENT__>TeleOp</a>
+                                <a href="Auto.html"__AUTO_CURRENT__>Autonomous</a>
+                                <a href="Total.html"__TOTAL_CURRENT__>Total</a>
                             </div>
                         </div>
                     </li>
@@ -471,9 +476,8 @@
             "Brunswick Eruption"
         ];
         const STORAGE_KEY = "scout_currentEvent";
-        const REPORTS_KEY = "scout_matchReports";
-        const RANK_METRIC = "total";
-        const METRIC_LABEL = "Total";
+        const RANK_METRIC = "__METRIC_KEY__";
+        const METRIC_LABEL = "__METRIC_LABEL__";
 
         function getCurrentEvent(){
             return localStorage.getItem(STORAGE_KEY) || "";
@@ -532,10 +536,11 @@
             sub.textContent = (current === 'ALL') ? 'All Events' : current;
         }
 
-        function getReports(){
-            try{ return JSON.parse(localStorage.getItem(REPORTS_KEY)) || []; }
-            catch(e){ return []; }
-        }
+        /* Reports come from the shared cloud database (see firebase-config.js).
+           A live subscription keeps this cache in sync so rankings update for
+           everyone as new reports are submitted. */
+        let _reportsCache = [];
+        function getReports(){ return _reportsCache; }
 
         function escapeHtml(value){
             const div = document.createElement('div');
@@ -621,6 +626,21 @@
         const navCollapse = document.getElementById('navbarSupportedContent');
         navCollapse.addEventListener('shown.bs.collapse', () => toggler.classList.add('is-open'));
         navCollapse.addEventListener('hidden.bs.collapse', () => toggler.classList.remove('is-open'));
+
+        /* Live subscription to the shared database. */
+        if(window.db){
+            window.db.collection('reports').onSnapshot(function(snap){
+                _reportsCache = snap.docs.map(function(d){ return d.data(); });
+                renderRankings();
+            }, function(err){
+                console.error(err);
+                var summary = document.getElementById('resultsSummary');
+                if(summary){ summary.textContent = 'Could not load shared data.'; }
+            });
+        } else {
+            var summary = document.getElementById('resultsSummary');
+            if(summary){ summary.textContent = 'Shared database not configured yet (see firebase-config.js).'; }
+        }
     </script>
 </body>
 </html>
