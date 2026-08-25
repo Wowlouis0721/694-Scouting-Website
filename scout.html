@@ -763,10 +763,10 @@
         document.querySelectorAll('.stepper').forEach(stepper => {
             const input = stepper.querySelector('input');
             stepper.querySelector('.step-down').addEventListener('click', () => {
-                input.value = Math.max(0, (parseInt(input.value || '0', 10) - 1));
+                input.value = Math.max(0, (parseInt(input.value || '0', 10) - 10));
             });
             stepper.querySelector('.step-up').addEventListener('click', () => {
-                input.value = (parseInt(input.value || '0', 10) + 1);
+                input.value = (parseInt(input.value || '0', 10) + 10);
             });
         });
 
