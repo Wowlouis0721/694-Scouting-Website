@@ -21,13 +21,17 @@
 }
 
 *{ box-sizing:border-box; }
-html, body{ margin:0; height: 100%; background-color: var(--steel-900); }
+html, body { 
+    margin: 0; 
+    height: 100%; 
+    background-color: var(--steel-900) !important; 
+}
 
-body{
-    background:var(--steel-900);
-    color:var(--paper);
-    font-family:'Inter', system-ui, sans-serif;
-    -webkit-font-smoothing:antialiased;
+body {
+    background: var(--steel-900) !important;
+    color: var(--paper);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* FIX: Global reset for all inputs/buttons so they default to dark theme 
