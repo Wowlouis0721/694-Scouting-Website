@@ -29,7 +29,7 @@ html, body {
 
 body{
     background:var(--steel-900);
-    color:var(--paper); /* <--- THIS LINE Sets global body text to white */
+    color:var(--paper) !important; /* <--- THIS LINE Sets global body text to white */
     font-family:'Inter', system-ui, sans-serif;
     -webkit-font-smoothing:antialiased;
 }
@@ -39,7 +39,7 @@ body{
 input, select, textarea, button {
     font-family: inherit;
     background-color: var(--steel-900);
-    color: var(--paper);
+    color: var(--paper) !important;
     border: 1px solid var(--steel-600);
 }
 /* Prevent Chrome/Safari autofill from turning inputs white */
@@ -94,7 +94,7 @@ a{ color:var(--blueprint); text-decoration:none; }
 .custom-toggler:focus{ outline:none; }
 .custom-toggler .bar{
     display:block; width:24px; height:2px;
-    background:var(--paper); border-radius:1px;
+    background:var(--paper) !important; border-radius:1px;
     transition:transform .25s ease, opacity .25s ease;
 }
 .custom-toggler.is-open .bar:nth-child(1){ transform:translateY(7px) rotate(45deg); }
@@ -582,7 +582,7 @@ a{ color:var(--blueprint); text-decoration:none; }
     font-size:.68rem;
     letter-spacing:.07em;
     text-transform:uppercase;
-    color:var(--paper-dim);
+    color:var(--paper-dim) !important;
     padding:0 10px 10px;
     border-bottom:1px solid var(--steel-600);
     white-space:nowrap;
@@ -605,7 +605,7 @@ a{ color:var(--blueprint); text-decoration:none; }
 .results-table .total-cell{ color:var(--fuel); }
 .results-table .empty-row td{
     text-align:center;
-    color:var(--paper-dim);
+    color:var(--paper-dim) !important;
     padding:24px 10px;
 }
 .results-table tr.rank-1 td{
@@ -617,7 +617,7 @@ a{ color:var(--blueprint); text-decoration:none; }
 .results-table tr.detail-row td{
     font-family:'IBM Plex Mono', monospace;
     font-size:.74rem;
-    color:var(--paper-dim);
+    color:var(--paper-dim) !important;
     background:rgba(0,0,0,.15);
     border-bottom:1px solid var(--steel-700);
     padding-top:6px; padding-bottom:10px;
@@ -642,7 +642,7 @@ a{ color:var(--blueprint); text-decoration:none; }
     width:22px; height:22px;
     border:none; border-radius:50%;
     background:rgba(17,21,26,.85);
-    color:var(--paper);
+    color:var(--paper) !important;
     font-size:.8rem; line-height:1;
     cursor:pointer;
 }
