@@ -13,19 +13,18 @@
         { key:'s5', label:'Shift 5', num:'05' },
         { key:'s6', label:'Shift 6', num:'06' }
     ];
+    /* Starting positions on the field map.
+       x / y are percentages of the field image (0–100) — nudge them here
+       if a mark isn't sitting exactly where you want it. */
     var START_POS = [
-        { key:'btL', glyph:'▤', label:'Behind Trench' },
-        { key:'utL', glyph:'⌒', label:'Under Trench' },
-        { key:'bpL', glyph:'▲', label:'Bump' },
-        { key:'ctr', glyph:'●', label:'Center' },
-        { key:'bpR', glyph:'▲', label:'Bump' },
-        { key:'utR', glyph:'⌒', label:'Under Trench' },
-        { key:'btR', glyph:'▤', label:'Behind Trench' }
+        { key:'ltr', label:'Left Trench',  x:21, y:22 },
+        { key:'lbp', label:'Left Bump',    x:21, y:74 },
+        { key:'hub', label:'Hub',          x:50, y:47 },
+        { key:'rtr', label:'Right Trench', x:76, y:22 },
+        { key:'rbp', label:'Right Bump',   x:76, y:74 }
     ];
-    var POS_LABEL = {
-        btL:'Behind Trench L', utL:'Under Trench L', bpL:'Bump L', ctr:'Center',
-        bpR:'Bump R', utR:'Under Trench R', btR:'Behind Trench R'
-    };
+    var POS_LABEL = {};
+    START_POS.forEach(function(p){ POS_LABEL[p.key] = p.label; });
     var BREAK_TAGS = ['Intake','Shooter','Hopper','Drivetrain','Climber','Electrical','Radio/Comms','Tipped','Other'];
 
     var alliance = 'red';
@@ -59,25 +58,26 @@
         return Math.max(0, parseInt((el && el.value) || '0', 10) || 0);
     }
 
-    /* ---------- starting position (flips for blue) ---------- */
-    function buildSlots(){
-        var holder = document.getElementById('startSlots');
-        var order = alliance === 'blue' ? START_POS.slice().reverse() : START_POS;
+    /* ---------- starting position (X marks on the field map) ---------- */
+    function buildFieldMarkers(){
+        var holder = document.getElementById('fieldMarkers');
         holder.innerHTML = '';
-        order.forEach(function(p){
+        START_POS.forEach(function(p){
             var b = document.createElement('button');
             b.type = 'button';
-            b.className = 'slot' + (startPos === p.key ? (' sel-' + alliance) : '');
+            b.className = 'field-x' + (startPos === p.key ? (' is-sel ally-' + alliance) : '');
+            b.style.left = p.x + '%';
+            b.style.top = p.y + '%';
             b.dataset.pos = p.key;
-            b.innerHTML = '<span class="glyph">' + p.glyph + '</span>' + p.label.replace(' ', '<br>');
+            b.setAttribute('aria-label', p.label + ' starting position');
+            b.setAttribute('aria-pressed', startPos === p.key ? 'true' : 'false');
+            b.innerHTML = '<span class="x-glyph">✕</span><span class="x-label">' + p.label.toUpperCase() + '</span>';
             b.addEventListener('click', function(){
                 startPos = (startPos === p.key) ? null : p.key;
-                buildSlots();
+                buildFieldMarkers();
             });
             holder.appendChild(b);
         });
-        document.getElementById('wallLabel').textContent =
-            (alliance === 'red' ? 'RED' : 'BLUE') + ' ALLIANCE WALL · VIEW FROM DRIVE STATION';
         var picked = document.getElementById('startPicked');
         picked.innerHTML = startPos
             ? 'Starting spot: <b>' + POS_LABEL[startPos] + '</b>'
@@ -89,7 +89,7 @@
             document.querySelectorAll('#allianceSeg button').forEach(function(b){
                 b.className = (b.dataset.alliance === alliance) ? ('on-' + alliance) : '';
             });
-            buildSlots();
+            buildFieldMarkers();
         });
     });
 
@@ -245,7 +245,7 @@
             document.getElementById('defenseRating').value = 5;
             document.getElementById('defenseRatingVal').textContent = '5/10';
             chosenTags.clear(); buildTags();
-            startPos = null; buildSlots();
+            startPos = null; buildFieldMarkers();
             ['startPanel','scoringPanel','foulsPanel','defensePanel','breakPanel'].forEach(function(id){
                 document.getElementById(id).classList.remove('disabled-zone');
             });
@@ -260,7 +260,7 @@
 
     /* ---------- boot ---------- */
     buildScoring();
-    buildSlots();
+    buildFieldMarkers();
     buildTags();
     S.wireSteppers(document.getElementById('foulsPanel'));
     S.initEventUI({ allowAll:false, onChange: function(){ prefillMatch(); refreshPitHint(); } });
