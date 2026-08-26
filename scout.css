@@ -353,8 +353,8 @@ a{ color:var(--blueprint); text-decoration:none; }
     padding:10px 6px;
     cursor:pointer;
 }
-.seg button.on-red{ background:var(--fuel); color:#fff; border-color:var(--fuel); }
-.seg button.on-blue{ background:var(--ally-blue); color:#fff; border-color:var(--ally-blue); }
+.seg button.on-red{ background:var(--fuel); color:#11151a; border-color:var(--fuel); }
+.seg button.on-blue{ background:var(--ally-blue); color:#11151a; border-color:var(--ally-blue); }
 
 /* starting position picker */
 .field-wall{
