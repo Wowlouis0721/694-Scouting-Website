@@ -20,6 +20,78 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* ---------- starting-position field map ---------- */
+        .field-map{
+            position:relative;
+            border:1px solid var(--steel-600, #3a4450);
+            border-radius:6px;
+            overflow:hidden;
+            background:#fff;
+        }
+        .field-map img{
+            display:block;
+            width:100%;
+            height:auto;
+            user-select:none;
+            -webkit-user-drag:none;
+        }
+        #fieldMarkers{ position:absolute; inset:0; }
+        .field-x{
+            position:absolute;
+            transform:translate(-50%,-50%);
+            background:none;
+            border:none;
+            padding:6px;
+            cursor:pointer;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            gap:3px;
+        }
+        .field-x .x-glyph{
+            font-family:'Oswald', sans-serif;
+            font-weight:700;
+            font-size:clamp(20px, 4vw, 38px);
+            line-height:1;
+            color:#2f6df0;
+            transition:transform .12s ease, color .12s ease;
+        }
+        .field-x:hover .x-glyph{ transform:scale(1.18); }
+        .field-x .x-label{
+            font-family:'IBM Plex Mono', monospace;
+            font-size:clamp(8px, 1.3vw, 12px);
+            font-weight:600;
+            letter-spacing:.04em;
+            color:#11151a;
+            background:rgba(255,255,255,.85);
+            padding:1px 6px;
+            border-radius:3px;
+            white-space:nowrap;
+            opacity:.75;
+        }
+        .field-x.is-sel .x-glyph{
+            background:rgba(255,255,255,.92);
+            border-radius:50%;
+            width:1.55em;
+            height:1.55em;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-shadow:0 0 0 3px currentColor;
+            transform:scale(1.12);
+        }
+        .field-x.is-sel.ally-red  .x-glyph{ color:#ee3f3f; }
+        .field-x.is-sel.ally-blue .x-glyph{ color:#1f57c0; }
+        .field-x.is-sel .x-label{ opacity:1; font-weight:700; color:#fff; }
+        .field-x.is-sel.ally-red  .x-label{ background:#ee3f3f; }
+        .field-x.is-sel.ally-blue .x-label{ background:#1f57c0; }
+        .field-x:focus-visible{ outline:2px solid var(--fuel, #ee3f3f); outline-offset:2px; border-radius:6px; }
+        @media (prefers-reduced-motion:reduce){
+            .field-x .x-glyph{ transition:none; }
+        }
+    </style>
 </head>
 
 <body>
@@ -131,9 +203,11 @@
 
         <section class="panel" id="startPanel">
             <p class="panel-eyebrow">Starting Position</p>
-            <p class="panel-hint">Tap one of the 7 starting spots — it fills with your alliance color. Layout flips automatically for blue.</p>
-            <p class="field-wall" id="wallLabel">RED ALLIANCE WALL &middot; VIEW FROM DRIVE STATION</p>
-            <div class="slots" id="startSlots"></div>
+            <p class="panel-hint">Tap an ✕ on the field map — it highlights in your alliance color. Tap it again to deselect.</p>
+            <div class="field-map">
+                <img src="field.png" alt="REBUILT 2026 field map" draggable="false">
+                <div id="fieldMarkers"></div>
+            </div>
             <p class="slot-picked" id="startPicked">No spot selected yet.</p>
         </section>
 
