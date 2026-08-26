@@ -196,7 +196,10 @@ a{ color:var(--blueprint); text-decoration:none; }
 .event-check{ opacity:0; color:var(--fuel); font-size:.8rem; }
 .event-row.is-active .event-check{ opacity:1; }
 .ranking-links{ display:flex; gap:14px; padding:4px 10px 6px; flex-wrap:wrap; }
-.ranking-links a{ font-size:.84rem; color:var(--blueprint); }
+.ranking-links a { 
+    font-size: .84rem; 
+    color: var(--blueprint) !important; 
+}
 .ranking-links a:hover{ color:var(--fuel); }
 .ranking-links a.is-current{ color:var(--fuel); font-weight:600; }
 
