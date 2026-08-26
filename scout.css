@@ -5,7 +5,6 @@
    ============================================================= */
 :root{
     /* FIX: Tells the browser to use dark defaults for scrollbars, autofill, etc. */
-    color-scheme: dark; 
     
     --steel-900:#11151a;
     --steel-800:#1b2127;
