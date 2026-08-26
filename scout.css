@@ -383,9 +383,9 @@ a{ color:var(--blueprint); text-decoration:none; }
     transition:background .12s ease, border-color .12s ease;
 }
 .slot .glyph{ margin:auto; font-size:1rem; color:var(--paper-dim); }
-.slot.sel-red{ background:var(--fuel); border-color:var(--fuel); color:#fff; }
-.slot.sel-blue{ background:var(--ally-blue); border-color:var(--ally-blue); color:#fff; }
-.slot.sel-red .glyph, .slot.sel-blue .glyph{ color:#fff; }
+.slot.sel-red{ background:var(--fuel); border-color:var(--fuel); color:#11151a; }
+.slot.sel-blue{ background:var(--ally-blue); border-color:var(--ally-blue); color:#11151a; }
+.slot.sel-red .glyph, .slot.sel-blue .glyph{ color:#11151a; }
 .slot-picked{
     font-family:'IBM Plex Mono', monospace;
     font-size:.74rem;
@@ -504,7 +504,7 @@ a{ color:var(--blueprint); text-decoration:none; }
 .submit-bar{ display:flex; justify-content:flex-end; }
 .btn-submit{
     background:var(--fuel);
-    color:#fff;
+    color:#11151a;
     font-family:'Oswald', sans-serif;
     text-transform:uppercase;
     letter-spacing:.05em;
@@ -768,7 +768,7 @@ a{ color:var(--blueprint); text-decoration:none; }
 .auth-sub b{ color:var(--paper); }
 .btn-signin{
     background:var(--fuel);
-    color:#fff;
+    color:#11151a;
     font-family:'Oswald', sans-serif;
     text-transform:uppercase;
     letter-spacing:.05em;
