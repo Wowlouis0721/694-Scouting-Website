@@ -4,6 +4,9 @@
    inline <style> blocks; edit colors/layout here once.
    ============================================================= */
 :root{
+    /* FIX: Tells the browser to use dark defaults for scrollbars, autofill, etc. */
+    color-scheme: dark; 
+    
     --steel-900:#11151a;
     --steel-800:#1b2127;
     --steel-700:#262e36;
@@ -18,13 +21,33 @@
 }
 
 *{ box-sizing:border-box; }
-html, body{ margin:0; }
+html, body{ margin:0; height: 100%; background-color: var(--steel-900); }
+
 body{
     background:var(--steel-900);
     color:var(--paper);
     font-family:'Inter', system-ui, sans-serif;
     -webkit-font-smoothing:antialiased;
 }
+
+/* FIX: Global reset for all inputs/buttons so they default to dark theme 
+   even if the specific CSS classes are missing in your HTML */
+input, select, textarea, button {
+    font-family: inherit;
+    background-color: var(--steel-900);
+    color: var(--paper);
+    border: 1px solid var(--steel-600);
+}
+/* Prevent Chrome/Safari autofill from turning inputs white */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px var(--steel-900) inset !important;
+    -webkit-text-fill-color: var(--paper) !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
 a{ color:var(--blueprint); text-decoration:none; }
 
 /* ===================== NAVBAR ===================== */
@@ -81,6 +104,8 @@ a{ color:var(--blueprint); text-decoration:none; }
     color:var(--paper-dim) !important;
     padding:.55rem .9rem !important;
     position:relative;
+    background: transparent;
+    border: none;
 }
 .app-navbar .nav-link::after{
     content:'';
@@ -328,8 +353,8 @@ a{ color:var(--blueprint); text-decoration:none; }
     padding:10px 6px;
     cursor:pointer;
 }
-.seg button.on-red{ background:var(--fuel); color:#fff; }
-.seg button.on-blue{ background:var(--ally-blue); color:#fff; }
+.seg button.on-red{ background:var(--fuel); color:#fff; border-color:var(--fuel); }
+.seg button.on-blue{ background:var(--ally-blue); color:#fff; border-color:var(--ally-blue); }
 
 /* starting position picker */
 .field-wall{
