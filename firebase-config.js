@@ -1,48 +1,57 @@
 /* =============================================================
    FIREBASE CONFIG  —  shared cloud storage for the scouting site
    -------------------------------------------------------------
-   This is what makes reports show up for EVERYONE instead of
-   only in the browser of the person who typed them.
+   Collections used:
+     reports  — match scout reports        (created by any @stuypulse.com user)
+     pit      — pit scouting w/ photos     (created/updated by any @stuypulse.com user)
+     admins   — emails with Admin access   (managed on admin.html; louis.lee@stuypulse.com is always admin)
 
-   SETUP (do this once — takes ~5 minutes):
-
-   1. Go to https://console.firebase.google.com and sign in with
-      any Google account. Click "Add project", give it a name
-      (e.g. "694-scouting"), and finish. You can skip Google
-      Analytics.
-
-   2. In the left sidebar open  Build → Firestore Database  →
-      "Create database". Choose a location, then start in
-      "test mode" for now (we tighten this in step 5).
-
-   3. Back on the project overview, click the  </>  (web) icon to
-      "Add app to get started". Register the app (nickname is
-      fine, you do NOT need Firebase Hosting). Firebase will show
-      you a config object that looks like the one below.
-
-   4. Copy YOUR values over the placeholder ones below and save
-      this file. (apiKey here is a public identifier, not a
-      secret — it is safe to commit to GitHub.)
-
-   5. In Firestore, open the "Rules" tab and paste this so anyone
-      on your team can read + write scouting reports:
+   ONE-TIME SETUP for login + locked-down data (~5 minutes):
+   1. console.firebase.google.com → your project → Build → Authentication
+      → "Get started" → Sign-in method → enable **Google** → Save.
+   2. Authentication → Settings → Authorized domains → Add domain:
+        wowlouis0721.github.io        (localhost is already allowed for testing)
+   3. Build → Firestore Database → Rules → replace everything with the block
+      below and press Publish. This is what actually enforces
+      "@stuypulse.com only" — the login screen alone is not enough.
 
         rules_version = '2';
         service cloud.firestore {
           match /databases/{database}/documents {
-            match /reports/{doc} {
-              allow read, write: if true;
+            function team() {
+              return request.auth != null
+                && request.auth.token.email is string
+                && request.auth.token.email.lower().matches('.*@stuypulse[.]com');
+            }
+            function admin() {
+              return team() && (
+                request.auth.token.email.lower() == 'louis.lee@stuypulse.com'
+                || exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower()))
+              );
+            }
+            match /reports/{id} {
+              allow read, create: if team();
+              allow update, delete: if admin();
+            }
+            match /pit/{id} {
+              allow read, create, update: if team();
+              allow delete: if admin();
+            }
+            match /admins/{email} {
+              allow read: if team();
+              allow create, update, delete: if admin();
             }
           }
         }
 
-      Click "Publish". (This makes the reports collection openly
-      readable/writable, which is fine for a scouting app. If you
-      later want to lock it down, that's where you'd do it.)
-
-   That's it. Upload this file plus the 5 HTML pages to your repo.
+   Note on "Slack login": a pure GitHub Pages site has no server, and
+   Slack's OAuth requires a server-held secret — so sign-in here uses the
+   team's @stuypulse.com Google accounts (the same emails as the Slack
+   workspace) and hard-rejects every other domain. If you ever want the
+   literal "Sign in with Slack" button, upgrade Firebase Auth to
+   Identity Platform and add Slack as a custom OIDC provider — no page
+   code here needs to change beyond the provider id.
    ============================================================= */
-
 const firebaseConfig = {
   apiKey: "AIzaSyB1T3I01Yrd-UvhuP470DTEZ24o635a13k",
   authDomain: "scouting-21dc4.firebaseapp.com",
@@ -52,7 +61,6 @@ const firebaseConfig = {
   appId: "1:807747305531:web:087e0e6d4c2c670f811c1e",
   measurementId: "G-ZJVV351MFF"
 };
-
 /* ---- Do not edit below this line ---- */
 let db = null;
 try {
@@ -61,7 +69,7 @@ try {
     db = firebase.firestore();
     window.db = db;
   } else {
-    console.warn("[scouting] Firebase not configured yet — edit firebase-config.js. Data will NOT be shared until you do.");
+    console.warn("[scouting] Firebase not configured yet — edit firebase-config.js.");
   }
 } catch (e) {
   console.error("[scouting] Firebase init failed:", e);
