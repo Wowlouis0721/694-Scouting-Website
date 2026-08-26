@@ -27,11 +27,11 @@ html, body {
     background-color: var(--steel-900) !important; 
 }
 
-body {
-    background: var(--steel-900) !important;
-    color: var(--paper);
-    font-family: 'Inter', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
+body{
+    background:var(--steel-900);
+    color:var(--paper); /* <--- THIS LINE Sets global body text to white */
+    font-family:'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
 }
 
 /* FIX: Global reset for all inputs/buttons so they default to dark theme 
