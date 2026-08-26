@@ -587,17 +587,19 @@ a{ color:var(--blueprint); text-decoration:none; }
     border-bottom:1px solid var(--steel-600);
     white-space:nowrap;
 }
-.results-table td{
-    padding:10px;
-    border-bottom:1px solid var(--steel-700);
-    font-size:.88rem;
-    vertical-align:top;
+.results-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--steel-700);
+    font-size: .88rem;
+    vertical-align: top;
+    color: var(--paper) !important; /* <--- ADD THIS LINE */
 }
 .results-table tr:last-child td{ border-bottom:none; }
-.results-table .num-cell{
-    font-family:'IBM Plex Mono', monospace;
-    font-weight:600;
-    white-space:nowrap;
+.results-table .num-cell {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    white-space: nowrap;
+    color: var(--paper) !important; /* <--- ADD THIS LINE */
 }
 .results-table .metric-cell{ color:var(--fuel); }
 .results-table .total-cell{ color:var(--fuel); }
