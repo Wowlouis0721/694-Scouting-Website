@@ -13,22 +13,34 @@
         { key:'s5', label:'Shift 5', num:'05' },
         { key:'s6', label:'Shift 6', num:'06' }
     ];
-    /* Starting positions on the field map.
-       x / y are percentages of the field image (0–100) — nudge them here
-       if a mark isn't sitting exactly where you want it. */
-    var START_POS = [
-        { key:'ltr', label:'Left Trench',  x:21, y:22 },
-        { key:'lbp', label:'Left Bump',    x:21, y:74 },
-        { key:'hub', label:'Hub',          x:50, y:47 },
-        { key:'rtr', label:'Right Trench', x:76, y:22 },
-        { key:'rbp', label:'Right Bump',   x:76, y:74 }
-    ];
-    var POS_LABEL = {};
-    START_POS.forEach(function(p){ POS_LABEL[p.key] = p.label; });
+    /* Starting positions: a column of 5 on each alliance's side of the field,
+       mirrored — like the marked-up field drawing. Only the zone name is
+       registered (startPos / startPosLabel), same as before; the side is
+       visual only (alliance is already recorded separately).
+       Numbers are percentages of the field image — measured off field.png. */
+    var SIDE_X = { red: 25.0, blue: 74.9 };            // x of each column
+    var ROW_Y  = [16.0, 33.0, 50.0, 66.9, 83.8];       // 5 rows, top → bottom
+    var POS_LABEL = {
+        ltr:'Left Trench', lbp:'Left Bump', hub:'Hub',
+        rbp:'Right Bump', rtr:'Right Trench'
+    };
+    /* top→bottom order per side: "left" is from that alliance's drive station,
+       so the blue column reads mirrored */
+    var SIDE_ORDER = {
+        red:  ['ltr','lbp','hub','rbp','rtr'],
+        blue: ['rtr','rbp','hub','lbp','ltr']
+    };
+    var START_POS = [];
+    ['red','blue'].forEach(function(side){
+        SIDE_ORDER[side].forEach(function(key, i){
+            START_POS.push({ key:key, side:side, label:POS_LABEL[key], x:SIDE_X[side], y:ROW_Y[i] });
+        });
+    });
     var BREAK_TAGS = ['Intake','Shooter','Hopper','Drivetrain','Climber','Electrical','Radio/Comms','Tipped','Other'];
 
     var alliance = 'red';
     var startPos = null;
+    var startSide = null;
     var chosenTags = new Set();
 
     /* ---------- scoring table ---------- */
@@ -63,17 +75,23 @@
         var holder = document.getElementById('fieldMarkers');
         holder.innerHTML = '';
         START_POS.forEach(function(p){
+            var isSel = (startPos === p.key && startSide === p.side);
             var b = document.createElement('button');
             b.type = 'button';
-            b.className = 'field-x' + (startPos === p.key ? (' is-sel ally-' + alliance) : '');
+            b.className = 'field-x' + (isSel ? (' is-sel ally-' + alliance) : '');
             b.style.left = p.x + '%';
             b.style.top = p.y + '%';
             b.dataset.pos = p.key;
-            b.setAttribute('aria-label', p.label + ' starting position');
-            b.setAttribute('aria-pressed', startPos === p.key ? 'true' : 'false');
+            b.dataset.side = p.side;
+            b.setAttribute('aria-label', p.label + ' starting position, ' + p.side + ' side');
+            b.setAttribute('aria-pressed', isSel ? 'true' : 'false');
             b.innerHTML = '<span class="x-glyph">✕</span><span class="x-label">' + p.label.toUpperCase() + '</span>';
             b.addEventListener('click', function(){
-                startPos = (startPos === p.key) ? null : p.key;
+                if(startPos === p.key && startSide === p.side){
+                    startPos = null; startSide = null;
+                } else {
+                    startPos = p.key; startSide = p.side;
+                }
                 buildFieldMarkers();
             });
             holder.appendChild(b);
@@ -245,7 +263,7 @@
             document.getElementById('defenseRating').value = 5;
             document.getElementById('defenseRatingVal').textContent = '5/10';
             chosenTags.clear(); buildTags();
-            startPos = null; buildFieldMarkers();
+            startPos = null; startSide = null; buildFieldMarkers();
             ['startPanel','scoringPanel','foulsPanel','defensePanel','breakPanel'].forEach(function(id){
                 document.getElementById(id).classList.remove('disabled-zone');
             });
