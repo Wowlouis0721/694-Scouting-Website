@@ -14,21 +14,25 @@
         { key:'s6', label:'Shift 6', num:'06' }
     ];
     /* ---------- the five starting spots ----------
-       x / y are percentages of the field image (0–100): x runs left→right,
-       y runs top→bottom. These are the RED coordinates, listed top-to-bottom
-       as they appear on the map. Blue is the same field rotated 180°, so its
-       dots are derived automatically — you never edit blue by hand.
+       All five sit on ONE straight vertical line, just clear of the hub.
+       START_X is that line, as a percentage of the field image's width
+       (0 = left edge, 100 = right edge) — move it to slide the whole
+       column toward or away from the hub. Each spot then only needs its
+       y, top (0) to bottom (100).
 
-       Left / right are from the drivers' point of view, so red's right rail
-       is the top of the picture and blue's right rail is the bottom.
+       These are the RED numbers. Blue is the same field rotated 180°, so
+       its dots are derived automatically — you never edit blue by hand.
+       Left / right are from the drivers' point of view, so red's right
+       rail is the top of the picture and blue's right rail is the bottom.
 
-       >>> To nudge a dot on the map, change ONLY these numbers. <<<        */
+       >>> To move the dots, change ONLY these numbers. <<<                */
+    var START_X = 28;
     var START_SPOTS = [
-        { key:'rtr', label:'Right Trench', x:22, y:12 },
-        { key:'rbp', label:'Right Bump',   x:27, y:31 },
-        { key:'hub', label:'Hub',          x:29, y:50 },
-        { key:'lbp', label:'Left Bump',    x:27, y:69 },
-        { key:'ltr', label:'Left Trench',  x:22, y:88 }
+        { key:'rtr', label:'Right Trench', y:12 },
+        { key:'rbp', label:'Right Bump',   y:31 },
+        { key:'hub', label:'Hub',          y:50 },
+        { key:'lbp', label:'Left Bump',    y:69 },
+        { key:'ltr', label:'Left Trench',  y:88 }
     ];
     var POS_LABEL = {
         rtr:'Right Trench', rbp:'Right Bump', hub:'Hub',
@@ -76,8 +80,8 @@
        the red ones rotated 180° about the middle of the field. */
     function coordsFor(spot, side){
         return (side === 'red')
-            ? { x: spot.x, y: spot.y }
-            : { x: 100 - spot.x, y: 100 - spot.y };
+            ? { x: START_X, y: spot.y }
+            : { x: 100 - START_X, y: 100 - spot.y };
     }
 
     function pickSpot(key){
