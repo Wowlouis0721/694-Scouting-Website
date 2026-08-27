@@ -44,8 +44,10 @@
     var BREAK_TAGS = ['Intake','Shooter','Hopper','Drivetrain','Climber','Electrical','Radio/Comms','Tipped','Other'];
 
     var alliance = 'red';
+    var matchType = 'qual';        /* 'qual' → Q12,  'playoff' → P12 */
     var startPos = null;
     var chosenTags = new Set();
+    var myAssignments = [];        /* open jobs for the signed-in scout */
 
     /* ---------- scoring table ---------- */
     function buildScoring(){
@@ -214,15 +216,91 @@
             }).catch(function(){ /* signed out / offline — hint is optional */ });
         }, 350);
     }
-    document.getElementById('teamNumber').addEventListener('input', refreshPitHint);
+    document.getElementById('teamNumber').addEventListener('input', function(){
+        refreshPitHint();
+        paintAssignBanner();
+    });
 
-    /* ---------- match number memory ---------- */
-    function matchKey(){ return 'scout_lastMatch::' + S.getCurrentEvent(); }
+    /* ---------- match type (Q / P) ---------- */
+    function currentLabel(){
+        return S.matchLabel(matchType, document.getElementById('matchNumber').value.trim());
+    }
+    function paintMatchType(){
+        document.querySelectorAll('#matchTypeSeg button').forEach(function(b){
+            b.className = (b.dataset.mtype === matchType) ? ('on-' + (matchType === 'playoff' ? 'blue' : 'red')) : '';
+        });
+        var code = currentLabel();
+        var el = document.getElementById('matchCode');
+        el.textContent = code ? '· ' + code : '';
+        el.className = 'match-code' + (matchType === 'playoff' ? ' is-playoff' : '');
+        paintAssignBanner();
+    }
+    document.querySelectorAll('#matchTypeSeg button').forEach(function(btn){
+        btn.addEventListener('click', function(){
+            matchType = btn.dataset.mtype;
+            document.getElementById('matchNumber').value = '';
+            paintMatchType();
+            prefillMatch();
+        });
+    });
+    document.getElementById('matchNumber').addEventListener('input', paintMatchType);
+
+    /* ---------- match number memory (kept per event AND per type, so
+                  flipping to playoffs doesn't suggest quals match 47) ---------- */
+    function matchKey(){ return 'scout_lastMatch::' + matchType + '::' + S.getCurrentEvent(); }
     function prefillMatch(){
         var last = parseInt(localStorage.getItem(matchKey()) || '0', 10);
         if(last > 0 && !document.getElementById('matchNumber').value){
             document.getElementById('matchNumber').value = last + 1;
         }
+        paintMatchType();
+    }
+
+    /* ---------- "you were assigned this one" banner ----------
+       Read-only: the scout form never writes assignments, it just tells you
+       when the match+team in front of you is one you were given. */
+    function paintAssignBanner(){
+        var banner = document.getElementById('assignBanner');
+        var ev = S.getCurrentEvent();
+        var team = document.getElementById('teamNumber').value.trim();
+        var label = currentLabel();
+        if(!ev || ev === 'ALL' || !team || !label){ banner.hidden = true; return; }
+        var hit = myAssignments.filter(function(a){
+            return S.jobKey(a.event, a.matchLabel, a.team) === S.jobKey(ev, label, team);
+        })[0];
+        banner.hidden = !hit;
+        if(hit) banner.innerHTML = 'Assigned to you: <b>' + S.escapeHtml(label) +
+            ' · Team ' + S.escapeHtml(hit.team) + '</b>';
+    }
+    function watchMyAssignments(){
+        if(!window.db) return;
+        window.db.collection('assignments').onSnapshot(function(snap){
+            myAssignments = snap.docs.map(function(d){ return d.data(); }).filter(S.assignedToMe);
+            paintAssignBanner();
+        }, function(){ /* optional convenience — never block scouting */ });
+    }
+
+    /* ---------- deep link from the dashboard: scout.html?match=12&type=qual&team=254 ---------- */
+    function applyDeepLink(){
+        var q;
+        try { q = new URLSearchParams(window.location.search); } catch(e){ return; }
+        var ev = q.get('event');
+        if(ev) S.setCurrentEvent(ev);
+        var t = q.get('type');
+        if(t === 'playoff' || t === 'qual') matchType = t;
+        var m = q.get('match');
+        if(m) document.getElementById('matchNumber').value = parseInt(m, 10) || '';
+        var team = q.get('team');
+        if(team) document.getElementById('teamNumber').value = team;
+        var ally = q.get('alliance');
+        if(ally === 'red' || ally === 'blue'){
+            alliance = ally;
+            document.querySelectorAll('#allianceSeg button').forEach(function(b){
+                b.className = (b.dataset.alliance === alliance) ? ('on-' + alliance) : '';
+            });
+            buildStartMap();
+        }
+        return !!(m || team);
     }
 
     /* ---------- submit ---------- */
@@ -257,7 +335,9 @@
         var report = {
             id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
             event: eventVal,
-            match: parseInt(matchVal, 10),
+            match: parseInt(matchVal, 10),          /* the bare number, for sorting */
+            matchType: matchType,                   /* 'qual' | 'playoff' */
+            matchLabel: S.matchLabel(matchType, matchVal),   /* what everyone reads: Q12 / P3 */
             team: teamVal,
             alliance: alliance,
             scout: S.userName(),
@@ -290,7 +370,7 @@
         saveReport(report).then(function(){
             submitBtn.disabled = false;
             submitBtn.textContent = originalLabel;
-            S.showToast('Saved — Q' + report.match + ' Team ' + report.team +
+            S.showToast('Saved — ' + report.matchLabel + ' Team ' + report.team +
                 ' · Auto ' + report.auto + ' · TeleOp ' + report.teleop + ' · Total ' + report.total);
 
             /* remember match, reset per-match fields, keep event + alliance */
@@ -298,6 +378,7 @@
             document.getElementById('matchNumber').value = report.match + 1;
             document.getElementById('teamNumber').value = '';
             document.getElementById('pitHint').textContent = '';
+            paintMatchType();
             document.getElementById('defended').value = '';
             document.getElementById('notes').value = '';
             document.getElementById('brokeTime').value = '';
@@ -329,8 +410,14 @@
     buildTags();
     S.wireSteppers(document.getElementById('foulsPanel'));
     S.initEventUI({ allowAll:false, onChange: function(){ prefillMatch(); refreshPitHint(); } });
+    var cameFromLink = applyDeepLink();
+    paintMatchType();
     S.ready(function(){
         document.getElementById('scoutName').value = S.userName();
-        prefillMatch();
+        /* a deep link already knows the match — don't overwrite it with the guess */
+        if(!cameFromLink) prefillMatch();
+        paintMatchType();
+        refreshPitHint();
+        watchMyAssignments();
     });
 })();

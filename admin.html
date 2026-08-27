@@ -6,10 +6,10 @@
     <meta name="color-scheme" content="dark">
     <title>Admin &middot; REBUILT 2026</title>
 
-    <link rel="stylesheet" href="scout.css">
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
         rel="stylesheet">
+    <link rel="stylesheet" href="scout.css">
 
     <!-- Firebase: shared cloud storage + @stuypulse.com sign-in -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -25,7 +25,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
         <div class="container-fluid">
-            <a class="navbar-brand" href="scout.html">
+            <a class="navbar-brand" href="index.html">
                 694 SCOUTING WEBSITE <span class="brand-tag">REBUILT&nbsp;&middot;&nbsp;2026</span>
             </a>
             <button class="custom-toggler"
@@ -39,6 +39,9 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Dashboard</a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="scout.html">Scout Match</a>
                     </li>
@@ -98,21 +101,71 @@
 
         <div id="adminContent" hidden>
             <section class="panel">
-                <p class="panel-eyebrow">Admin Access</p>
-                <p class="panel-hint">Only these @stuypulse.com accounts can reach this page.
-                    <b>louis.lee@stuypulse.com</b> is the permanent seed admin and can't be removed.</p>
-                <div id="adminList"></div>
-                <div class="add-row">
-                    <input id="newAdminEmail" type="text" placeholder="name@stuypulse.com">
-                    <button type="button" class="btn-mini" id="addAdminBtn">Add admin</button>
+                <p class="panel-eyebrow">Assignments</p>
+                <p class="panel-hint">Give a scout one match and one team. It shows up on their dashboard,
+                    and ticks itself off the moment a matching report lands.</p>
+                <div class="assign-form">
+                    <div class="field">
+                        <label for="assignEvent">Event</label>
+                        <select id="assignEvent"></select>
+                    </div>
+                    <div class="field">
+                        <label for="assignMatch">Match <span class="match-code" id="assignCode"></span></label>
+                        <div class="match-row">
+                            <div class="seg seg-sm" id="assignTypeSeg">
+                                <button type="button" data-mtype="qual" class="on-red" title="Qualification match">Q</button>
+                                <button type="button" data-mtype="playoff" title="Playoff match">P</button>
+                            </div>
+                            <input id="assignMatch" type="number" min="1" placeholder="12" aria-label="Match number">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="assignTeam">Team</label>
+                        <input id="assignTeam" type="number" min="0" placeholder="254">
+                    </div>
+                    <div class="field">
+                        <label for="assignWho">Assign to</label>
+                        <input id="assignWho" type="text" list="peopleList" autocomplete="off"
+                               placeholder="Pick or type a name">
+                        <datalist id="peopleList"></datalist>
+                    </div>
+                    <div class="field assign-action">
+                        <label class="field-label-spacer">Add</label>
+                        <button type="button" class="btn-search" id="addAssignBtn">Assign</button>
+                    </div>
                 </div>
+                <p class="assign-resolve" id="assignResolve"></p>
+
+                <div class="assign-toolbar">
+                    <div class="field field-narrow">
+                        <label for="assignFilter">Showing</label>
+                        <select id="assignFilter"></select>
+                    </div>
+                    <label class="check-row">
+                        <input type="checkbox" id="showDone"> Include finished
+                    </label>
+                </div>
+                <div id="assignList"></div>
             </section>
 
-            <section class="panel">
-                <p class="panel-eyebrow">Scout Leaderboard</p>
-                <p class="panel-hint">Match reports submitted per scout, all events combined.</p>
-                <div id="leaderboardList"></div>
-            </section>
+            <div class="panel-row">
+                <section class="panel">
+                    <p class="panel-eyebrow">Admin Access</p>
+                    <p class="panel-hint">Only these @stuypulse.com accounts can reach this page.
+                        <b>louis.lee@stuypulse.com</b> is the permanent seed admin and can't be removed.</p>
+                    <div id="adminList"></div>
+                    <div class="add-row">
+                        <input id="newAdminEmail" type="text" placeholder="name@stuypulse.com">
+                        <button type="button" class="btn-mini" id="addAdminBtn">Add admin</button>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <p class="panel-eyebrow">Scout Leaderboard</p>
+                    <p class="panel-hint">Match reports submitted per scout, all events combined.</p>
+                    <div id="leaderboardList"></div>
+                </section>
+            </div>
 
             <section class="panel">
                 <p class="panel-eyebrow">PulseCrew Flags</p>

@@ -2,7 +2,9 @@
    FIREBASE CONFIG  —  shared cloud storage for the scouting site
    -------------------------------------------------------------
    Collections used:
-     reports  — match scout reports        (created by any @stuypulse.com user)
+     reports      — match scout reports    (created by any @stuypulse.com user)
+     assignments  — match+team handed to one scout (admins write, everyone reads)
+     users        — everyone who has signed in (fills the "Assign to" dropdown)
      pit      — pit scouting w/ photos     (created/updated by any @stuypulse.com user)
      admins   — emails with Admin access   (managed on admin.html; louis.lee@stuypulse.com is always admin)
 
@@ -38,6 +40,16 @@
               allow delete: if admin();
             }
             match /admins/{email} {
+              allow read: if team();
+              allow create, update, delete: if admin();
+            }
+            match /users/{email} {
+              allow read: if team();
+              allow create, update: if team()
+                && request.auth.token.email.lower() == email;
+              allow delete: if admin();
+            }
+            match /assignments/{id} {
               allow read: if team();
               allow create, update, delete: if admin();
             }

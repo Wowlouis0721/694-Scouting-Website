@@ -44,6 +44,30 @@ window.Scout694 = (function(){
             String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
     }
 
+    /* ---------------- match labels: quals are Q#, playoffs are P# ----------------
+       One place decides how a match is written, so the scout form, the
+       assignments, team search, the rankings and the admin tables can never
+       disagree about what "match 12" is called. */
+    function matchLabel(type, number){
+        const n = parseInt(number, 10);
+        if(!n && n !== 0) return '';
+        return (type === 'playoff' ? 'P' : 'Q') + n;
+    }
+    /* reports written before playoffs existed had no type — they were all quals */
+    function reportMatchLabel(r){
+        if(!r) return '—';
+        if(r.matchLabel) return r.matchLabel;
+        return (r.match || r.match === 0) ? 'Q' + r.match : '—';
+    }
+    /* event + match + team identifies one scouting job, and is how an
+       assignment finds the report that completed it */
+    function jobKey(event, label, team){
+        return [event || '', label || '', String(team == null ? '' : team).trim()].join('|');
+    }
+    function reportJobKey(r){
+        return jobKey(r.event, reportMatchLabel(r), r.team);
+    }
+
     /* ---------------- current event ---------------- */
     let _eventChangeCbs = [];
     function getCurrentEvent(){ 
@@ -122,6 +146,13 @@ window.Scout694 = (function(){
             sub.textContent = (!current || current === 'ALL')
                 ? (_eventOpts.allowAll ? 'All Events' : 'No event selected')
                 : current;
+        }
+        /* the same event, echoed in the navbar so it is on screen on every page */
+        const chip = document.getElementById('navEventChip');
+        if(chip){
+            const named = current && current !== 'ALL';
+            chip.hidden = !named;
+            chip.textContent = named ? current : '';
         }
     }
 
@@ -221,11 +252,14 @@ window.Scout694 = (function(){
         if(_user){
             slot.innerHTML =
                 '<div class="nav-auth">' +
+                  '<span class="nav-event" id="navEventChip" hidden></span>' +
+                  '<span class="nav-sep"></span>' +
                   '<span class="nav-user"></span>' +
                   '<button type="button" class="nav-signout">Sign out</button>' +
                 '</div>';
             slot.querySelector('.nav-user').textContent = _user.displayName || _user.email;
             slot.querySelector('.nav-signout').addEventListener('click', signOut);
+            _renderEventUI();   /* fill the chip we just created */
         } else {
             slot.innerHTML = '';
         }
@@ -242,6 +276,7 @@ window.Scout694 = (function(){
                 _user = user;
                 gate.hidden = true;
                 _paintChip();
+                _registerUser(user);
                 if(!_readyFired){
                     _readyFired = true;
                     _readyCbs.forEach(cb => { try { cb(user); } catch(e){ console.error(e); } });
@@ -276,6 +311,36 @@ window.Scout694 = (function(){
                 .catch(function(){ return false; });
         }
         return _adminPromise;
+    }
+
+    /* ---------------- who has used the site ----------------
+       Every successful sign-in stamps a users/{email} doc. That is the only
+       way a static site can know who exists, and it is what fills the
+       "Assign to" dropdown on admin.html — no roster to maintain by hand. */
+    function _registerUser(user){
+        if(!window.db || !user || !user.email) return;
+        const email = user.email.toLowerCase();
+        window.db.collection('users').doc(email).set({
+            email: email,
+            name: user.displayName || email,
+            lastSeen: new Date().toISOString()
+        }, { merge: true }).catch(() => { /* a failed stamp must never block the page */ });
+    }
+    /* An assignment can name someone who has never signed in (the admin just
+       typed a name), so ownership is checked by email when we have one and by
+       name when we don't. */
+    function assignedToMe(a){
+        if(!a || !_user) return false;
+        if(a.assigneeEmail) return a.assigneeEmail.toLowerCase() === userEmail();
+        const mine = (userName() || '').trim().toLowerCase();
+        return !!mine && (a.assigneeName || '').trim().toLowerCase() === mine;
+    }
+    function listUsers(){
+        if(!window.db) return Promise.resolve([]);
+        return window.db.collection('users').get()
+            .then(snap => snap.docs.map(d => d.data())
+                .sort((a, b) => (a.name || a.email || '').localeCompare(b.name || b.email || '')))
+            .catch(() => []);
     }
 
     /* ---------------- photo compression (keeps Firestore docs small) ---------------- */
@@ -319,6 +384,12 @@ window.Scout694 = (function(){
         escapeHtml: escapeHtml,
         showToast: showToast,
         fmtWhen: fmtWhen,
+        matchLabel: matchLabel,
+        reportMatchLabel: reportMatchLabel,
+        jobKey: jobKey,
+        reportJobKey: reportJobKey,
+        listUsers: listUsers,
+        assignedToMe: assignedToMe,
         signIn: signIn,
         signOut: signOut,
         ready: ready,

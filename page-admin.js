@@ -8,6 +8,9 @@
 
     var _reportsCache = [];
     var _pitCache = [];
+    var _assignCache = [];
+    var _people = [];              /* everyone who has ever signed in */
+    var assignType = 'qual';
 
     /* ---------- gate ---------- */
     function paintGate(isAdmin){
@@ -62,6 +65,185 @@
         }).catch(function(err){ S.showToast('Could not add: ' + err.message, true); });
     });
 
+    /* =========================================================
+       ASSIGNMENTS — one match + one team, handed to one scout
+       ========================================================= */
+
+    /* The "Assign to" box is a real text input backed by a <datalist>: the
+       dropdown lists everyone who has signed in, but an admin can type a name
+       that isn't there yet. If what they typed matches a known person we
+       attach that person's email (so the assignment follows them even if they
+       change their display name); if not, we keep the plain name and match on
+       it instead. */
+    function paintPeople(){
+        var list = document.getElementById('peopleList');
+        list.innerHTML = '';
+        _people.forEach(function(p){
+            var opt = document.createElement('option');
+            opt.value = p.name || p.email;
+            list.appendChild(opt);
+        });
+    }
+    function resolvePerson(typed){
+        var t = (typed || '').trim();
+        if(!t) return null;
+        var low = t.toLowerCase();
+        var hit = _people.filter(function(p){
+            return (p.name || '').toLowerCase() === low || (p.email || '').toLowerCase() === low;
+        })[0];
+        return hit
+            ? { name: hit.name || hit.email, email: (hit.email || '').toLowerCase(), known: true }
+            : { name: t, email: '', known: false };
+    }
+    function paintResolve(){
+        var el = document.getElementById('assignResolve');
+        var who = resolvePerson(document.getElementById('assignWho').value);
+        if(!who){ el.textContent = ''; el.className = 'assign-resolve'; return; }
+        if(who.known){
+            el.textContent = 'Matches ' + who.email + ' — will appear on their dashboard.';
+            el.className = 'assign-resolve is-ok';
+        } else {
+            el.textContent = '“' + who.name + '” hasn\'t signed in yet — the assignment ' +
+                'will find them by name once they do.';
+            el.className = 'assign-resolve is-warn';
+        }
+    }
+    document.getElementById('assignWho').addEventListener('input', paintResolve);
+
+    function paintAssignType(){
+        document.querySelectorAll('#assignTypeSeg button').forEach(function(b){
+            b.className = (b.dataset.mtype === assignType)
+                ? ('on-' + (assignType === 'playoff' ? 'blue' : 'red')) : '';
+        });
+        var code = S.matchLabel(assignType, document.getElementById('assignMatch').value.trim());
+        var el = document.getElementById('assignCode');
+        el.textContent = code ? '· ' + code : '';
+        el.className = 'match-code' + (assignType === 'playoff' ? ' is-playoff' : '');
+    }
+    document.querySelectorAll('#assignTypeSeg button').forEach(function(btn){
+        btn.addEventListener('click', function(){ assignType = btn.dataset.mtype; paintAssignType(); });
+    });
+    document.getElementById('assignMatch').addEventListener('input', paintAssignType);
+
+    function buildAssignSelects(){
+        var ev = document.getElementById('assignEvent');
+        var filter = document.getElementById('assignFilter');
+        ev.innerHTML = '';
+        filter.innerHTML = '';
+        var all = document.createElement('option');
+        all.value = 'ALL'; all.textContent = 'All Events';
+        filter.appendChild(all);
+        S.EVENTS.forEach(function(name){
+            var a = document.createElement('option');
+            a.value = name; a.textContent = name;
+            ev.appendChild(a);
+            var b = document.createElement('option');
+            b.value = name; b.textContent = name;
+            filter.appendChild(b);
+        });
+        var current = S.getCurrentEvent();
+        if(current && current !== 'ALL'){ ev.value = current; filter.value = current; }
+        filter.addEventListener('change', renderAssignments);
+        document.getElementById('showDone').addEventListener('change', renderAssignments);
+    }
+
+    document.getElementById('addAssignBtn').addEventListener('click', function(){
+        var ev = document.getElementById('assignEvent').value;
+        var num = document.getElementById('assignMatch').value.trim();
+        var team = document.getElementById('assignTeam').value.trim();
+        var who = resolvePerson(document.getElementById('assignWho').value);
+
+        if(!ev){ S.showToast('Pick an event.', true); return; }
+        if(!num){ S.showToast('Enter a match number.', true); return; }
+        if(!team){ S.showToast('Enter a team number.', true); return; }
+        if(!who){ S.showToast('Pick or type who this is for.', true); return; }
+
+        var label = S.matchLabel(assignType, num);
+        var id = [ev, label, team, (who.email || who.name)].join('__').replace(/[\/\s]+/g, '_');
+
+        /* the same person, match and team twice is a mistake, not a second job */
+        var dupe = _assignCache.filter(function(a){
+            return a.event === ev && a.matchLabel === label && String(a.team) === team &&
+                ((who.email && a.assigneeEmail === who.email) ||
+                 (!who.email && (a.assigneeName || '').toLowerCase() === who.name.toLowerCase()));
+        })[0];
+        if(dupe){ S.showToast(who.name + ' already has ' + label + ' · ' + team + '.', true); return; }
+
+        window.db.collection('assignments').doc(id).set({
+            id: id,
+            event: ev,
+            matchType: assignType,
+            matchLabel: label,
+            matchNumber: parseInt(num, 10),
+            team: team,
+            assigneeName: who.name,
+            assigneeEmail: who.email,
+            assignedBy: S.userName(),
+            assignedAt: new Date().toISOString()
+        }).then(function(){
+            S.showToast('Assigned ' + label + ' · Team ' + team + ' to ' + who.name + '.');
+            document.getElementById('assignMatch').value = num;   /* same match, next team */
+            document.getElementById('assignTeam').value = '';
+            paintAssignType();
+        }).catch(function(err){ S.showToast('Could not assign: ' + err.message, true); });
+    });
+
+    /* An assignment is finished when a report exists for the same event,
+       match and team — no one has to remember to tick anything. */
+    function doneKeys(){
+        var set = {};
+        _reportsCache.forEach(function(r){ set[S.reportJobKey(r)] = r; });
+        return set;
+    }
+    function renderAssignments(){
+        var holder = document.getElementById('assignList');
+        var eventVal = document.getElementById('assignFilter').value || 'ALL';
+        var showDone = document.getElementById('showDone').checked;
+        var done = doneKeys();
+
+        var rows = _assignCache
+            .filter(function(a){ return eventVal === 'ALL' || a.event === eventVal; })
+            .map(function(a){
+                return Object.assign({}, a, { report: done[S.jobKey(a.event, a.matchLabel, a.team)] || null });
+            })
+            .filter(function(a){ return showDone || !a.report; })
+            .sort(function(a, b){
+                var ap = (a.matchType === 'playoff') ? 1 : 0, bp = (b.matchType === 'playoff') ? 1 : 0;
+                if(ap !== bp) return ap - bp;
+                if((a.matchNumber || 0) !== (b.matchNumber || 0)) return (a.matchNumber || 0) - (b.matchNumber || 0);
+                return (a.assigneeName || '').localeCompare(b.assigneeName || '');
+            });
+
+        holder.innerHTML = '';
+        if(!rows.length){
+            holder.innerHTML = '<p class="panel-hint" style="margin:0">' +
+                (showDone ? 'No assignments here yet.' : 'Nothing outstanding — every assignment has a report.') +
+                '</p>';
+            return;
+        }
+        rows.forEach(function(a){
+            var row = document.createElement('div');
+            row.className = 'assign-row' + (a.report ? ' is-done' : '');
+            row.innerHTML =
+                '<span class="assign-code' + (a.matchType === 'playoff' ? ' is-playoff' : '') + '">' +
+                    esc(a.matchLabel) + '</span>' +
+                '<span class="assign-team">' + esc(a.team) + '</span>' +
+                '<span class="assign-who">' + esc(a.assigneeName) + '</span>' +
+                '<span class="assign-state">' + (a.report ? 'done' : 'open') + '</span>';
+            var del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'btn-mini danger';
+            del.textContent = 'Remove';
+            del.addEventListener('click', function(){
+                if(!confirm('Remove ' + a.matchLabel + ' · Team ' + a.team + ' from ' + a.assigneeName + '?')) return;
+                window.db.collection('assignments').doc(a.id).delete()
+                    .catch(function(err){ S.showToast('Could not remove: ' + err.message, true); });
+            });
+            row.appendChild(del);
+            holder.appendChild(row);
+        });
+    }
+
     /* ---------- leaderboard ---------- */
     function renderLeaderboard(){
         var counts = {};
@@ -86,7 +268,7 @@
 
     /* ---------- PulseCrew flags ---------- */
     function pcMessage(r){
-        return ':rotating_light: PulseCrew — Team ' + r.team + ' broke in Q' + r.match +
+        return ':rotating_light: PulseCrew — Team ' + r.team + ' broke in ' + S.reportMatchLabel(r) +
             (r.brokeTime ? ' (' + r.brokeTime + ')' : '') + ': ' +
             ((r.brokeTags || []).join(', ') || 'see scout') +
             (r.notes ? '. Notes: ' + r.notes : '');
@@ -101,7 +283,7 @@
             var card = document.createElement('div');
             card.className = 'flag-card';
             card.innerHTML =
-                '<div class="flag-head">Q' + esc(r.match) + ' &middot; Team ' + esc(r.team) + ' &middot; ' + esc(r.event) + '</div>' +
+                '<div class="flag-head">' + esc(S.reportMatchLabel(r)) + ' &middot; Team ' + esc(r.team) + ' &middot; ' + esc(r.event) + '</div>' +
                 '<div>' + esc((r.brokeTags || []).join(', ') || 'untagged') + (r.brokeTime ? ' @ ' + esc(r.brokeTime) : '') + '</div>' +
                 '<div class="pit-meta">' + esc(r.scout) + ' &middot; ' + S.fmtWhen(r.timestamp) + '</div>';
             var btn = document.createElement('button');
@@ -148,7 +330,7 @@
         rows.forEach(function(r){
             var tr = document.createElement('tr');
             tr.innerHTML =
-                '<td class="num-cell">' + (r.match ? 'Q' + esc(r.match) : '—') + '</td>' +
+                '<td class="num-cell">' + esc(S.reportMatchLabel(r)) + '</td>' +
                 '<td>' + esc(r.event) + '</td>' +
                 '<td class="num-cell">' + esc(r.team) + '</td>' +
                 '<td class="num-cell">' + (r.alliance === 'red' ? '<span class="ally-red">RED</span>' : r.alliance === 'blue' ? '<span class="ally-blue">BLUE</span>' : '—') + '</td>' +
@@ -162,7 +344,7 @@
             del.className = 'btn-mini danger';
             del.textContent = 'Delete';
             del.addEventListener('click', function(){
-                if(!confirm('Delete Q' + r.match + ' Team ' + r.team + ' (' + r.event + ')? This cannot be undone.')) return;
+                if(!confirm('Delete ' + S.reportMatchLabel(r) + ' Team ' + r.team + ' (' + r.event + ')? This cannot be undone.')) return;
                 window.db.collection('reports').doc(r.id).delete()
                     .then(function(){ S.showToast('Deleted.'); })
                     .catch(function(err){ S.showToast('Delete failed: ' + err.message, true); });
@@ -211,12 +393,21 @@
         if(booted) return;
         booted = true;
         subscribeAdmins();
+        S.initEventUI({ allowAll:true });   /* fills the Events dropdown in the navbar */
         buildReportFilter();
+        buildAssignSelects();
+        paintAssignType();
+        S.listUsers().then(function(people){ _people = people; paintPeople(); });
+        window.db.collection('assignments').onSnapshot(function(snap){
+            _assignCache = snap.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
+            renderAssignments();
+        }, function(err){ console.error(err); S.showToast('Could not load assignments.', true); });
         window.db.collection('reports').onSnapshot(function(snap){
             _reportsCache = snap.docs.map(function(d){ return Object.assign({ id: d.id }, d.data()); });
             renderLeaderboard();
             renderFlags();
             renderReports();
+            renderAssignments();   /* a new report can close an assignment */
         }, function(err){ console.error(err); S.showToast('Could not load reports.', true); });
         window.db.collection('pit').onSnapshot(function(snap){
             _pitCache = snap.docs.map(function(d){ return d.data(); });

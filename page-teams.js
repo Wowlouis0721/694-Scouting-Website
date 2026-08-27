@@ -39,6 +39,9 @@
         var matches = _reportsCache
             .filter(function(r){ return String(r.team).trim() === teamVal && (eventVal === 'ALL' || r.event === eventVal); })
             .sort(function(a, b){
+                /* playoffs sit above quals, then highest match first */
+                var ap = (a.matchType === 'playoff') ? 1 : 0, bp = (b.matchType === 'playoff') ? 1 : 0;
+                if(ap !== bp) return bp - ap;
                 if((a.match || 0) !== (b.match || 0)) return (b.match || 0) - (a.match || 0);
                 return new Date(b.timestamp) - new Date(a.timestamp);
             });
@@ -68,7 +71,7 @@
         matches.forEach(function(r){
             var tr = document.createElement('tr');
             tr.innerHTML =
-                '<td class="num-cell">' + (r.match ? 'Q' + esc(r.match) : '—') + (r.noShow ? ' <span class="flag-yes">NS</span>' : '') + '</td>' +
+                '<td class="num-cell">' + esc(S.reportMatchLabel(r)) + (r.noShow ? ' <span class="flag-yes">NS</span>' : '') + '</td>' +
                 '<td>' + esc(r.event) + '</td>' +
                 '<td class="num-cell">' + allianceCell(r) + '</td>' +
                 '<td>' + esc(r.startPosLabel || (r.noShow ? 'no show' : '')) + '</td>' +
