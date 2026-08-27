@@ -13,16 +13,27 @@
         { key:'s5', label:'Shift 5', num:'05' },
         { key:'s6', label:'Shift 6', num:'06' }
     ];
-    var START_POS = [
-        { key:'btL', glyph:'▤', label:'Behind Trench' },
-        { key:'utL', glyph:'⌒', label:'Under Trench' },
-        { key:'bpL', glyph:'▲', label:'Bump' },
-        { key:'ctr', glyph:'●', label:'Center' },
-        { key:'bpR', glyph:'▲', label:'Bump' },
-        { key:'utR', glyph:'⌒', label:'Under Trench' },
-        { key:'btR', glyph:'▤', label:'Behind Trench' }
+    /* ---------- the five starting spots ----------
+       x / y are percentages of the field image (0–100): x runs left→right,
+       y runs top→bottom. These are the RED coordinates, listed top-to-bottom
+       as they appear on the map. Blue is the same field rotated 180°, so its
+       dots are derived automatically — you never edit blue by hand.
+
+       Left / right are from the drivers' point of view, so red's right rail
+       is the top of the picture and blue's right rail is the bottom.
+
+       >>> To nudge a dot on the map, change ONLY these numbers. <<<        */
+    var START_SPOTS = [
+        { key:'rtr', label:'Right Trench', x:22, y:12 },
+        { key:'rbp', label:'Right Bump',   x:27, y:31 },
+        { key:'hub', label:'Hub',          x:29, y:50 },
+        { key:'lbp', label:'Left Bump',    x:27, y:69 },
+        { key:'ltr', label:'Left Trench',  x:22, y:88 }
     ];
     var POS_LABEL = {
+        rtr:'Right Trench', rbp:'Right Bump', hub:'Hub',
+        lbp:'Left Bump',    ltr:'Left Trench',
+        /* legacy keys, so older reports still read correctly in Team Search */
         btL:'Behind Trench L', utL:'Under Trench L', bpL:'Bump L', ctr:'Center',
         bpR:'Bump R', utR:'Under Trench R', btR:'Behind Trench R'
     };
@@ -59,70 +70,75 @@
         return Math.max(0, parseInt((el && el.value) || '0', 10) || 0);
     }
 
-    /* ---------- starting position: X markers on a scalable field map ---------- */
-    /* Cell centres of a 7-column grid — the labels use the same grid, so each
-       X sits exactly above its own label at every screen width. */
-    var COLS = [7.143, 21.429, 35.714, 50, 64.286, 78.571, 92.857];
+    /* ---------- starting position: five tappable points per alliance ----------
+       Both halves of the field are drawn, so a scout can see the whole picture,
+       but only the selected alliance's five points are live. Blue's points are
+       the red ones rotated 180° about the middle of the field. */
+    function coordsFor(spot, side){
+        return (side === 'red')
+            ? { x: spot.x, y: spot.y }
+            : { x: 100 - spot.x, y: 100 - spot.y };
+    }
 
-    function buildSlots(){
-        var holder = document.getElementById('startSlots');
-        var order = alliance === 'blue' ? START_POS.slice().reverse() : START_POS;
-        holder.className = 'fieldmap';
-        holder.innerHTML = '';
+    function pickSpot(key){
+        startPos = (startPos === key) ? null : key;
+        buildStartMap();
+    }
 
-        function pick(key){
-            return function(){
-                startPos = (startPos === key) ? null : key;
-                buildSlots();
-            };
-        }
+    function buildStartMap(){
+        var marks = document.getElementById('fieldMarkers');
+        var legend = document.getElementById('startLegend');
+        marks.innerHTML = '';
+        legend.innerHTML = '';
 
-        var field = document.createElement('div');
-        field.className = 'fm-field ' + (alliance === 'blue' ? 'is-blue' : 'is-red');
-        field.innerHTML =
-            '<div class="fm-trench fm-trench-l"></div>' +
-            '<div class="fm-trench fm-trench-r"></div>' +
-            '<div class="fm-bump fm-bump-l"></div>' +
-            '<div class="fm-bump fm-bump-r"></div>' +
-            '<div class="fm-center"></div>' +
-            '<div class="fm-wall"></div>';
+        ['red', 'blue'].forEach(function(side){
+            var live = (side === alliance);
+            START_SPOTS.forEach(function(spot){
+                var sel = live && (startPos === spot.key);
+                var c = coordsFor(spot, side);
 
-        var labels = document.createElement('div');
-        labels.className = 'fm-labels';
+                var mark = document.createElement('button');
+                mark.type = 'button';
+                mark.className = 'field-x ally-' + side +
+                    (live ? ' is-live' : ' is-ghost') + (sel ? ' is-sel' : '');
+                mark.style.left = c.x + '%';
+                mark.style.top = c.y + '%';
+                mark.dataset.pos = spot.key;
+                mark.innerHTML = '<span class="x-glyph">&#10005;</span><span class="x-label"></span>';
+                mark.querySelector('.x-label').textContent = spot.label;
 
-        order.forEach(function(p, i){
-            var sel = (startPos === p.key);
-
-            var mark = document.createElement('button');
-            mark.type = 'button';
-            mark.className = 'fm-mark' + (sel ? (' sel-' + alliance) : '');
-            mark.style.left = COLS[i] + '%';
-            mark.dataset.pos = p.key;
-            mark.setAttribute('aria-label', POS_LABEL[p.key]);
-            mark.setAttribute('aria-pressed', sel ? 'true' : 'false');
-            mark.innerHTML = '<span class="fm-x"></span>';
-            mark.addEventListener('click', pick(p.key));
-            field.appendChild(mark);
-
-            var label = document.createElement('button');
-            label.type = 'button';
-            label.className = 'fm-label' + (sel ? (' on-' + alliance) : '');
-            label.dataset.pos = p.key;
-            label.textContent = p.label;
-            label.setAttribute('aria-hidden', 'true');
-            label.tabIndex = -1;
-            label.addEventListener('click', pick(p.key));
-            labels.appendChild(label);
+                if(live){
+                    mark.setAttribute('aria-label', spot.label + ' — ' + side.toUpperCase() + ' start');
+                    mark.setAttribute('aria-pressed', sel ? 'true' : 'false');
+                    mark.addEventListener('click', function(){ pickSpot(spot.key); });
+                } else {
+                    mark.disabled = true;
+                    mark.tabIndex = -1;
+                    mark.setAttribute('aria-hidden', 'true');
+                }
+                marks.appendChild(mark);
+            });
         });
 
-        holder.appendChild(field);
-        holder.appendChild(labels);
+        /* legend under the map, in the same top-to-bottom order as the dots —
+           doubles as the tap target on phones, where the on-map text is hidden */
+        var order = (alliance === 'blue') ? START_SPOTS.slice().reverse() : START_SPOTS;
+        order.forEach(function(spot){
+            var sel = (startPos === spot.key);
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'legend-spot' + (sel ? (' on-' + alliance) : '');
+            b.dataset.pos = spot.key;
+            b.textContent = spot.label;
+            b.setAttribute('aria-pressed', sel ? 'true' : 'false');
+            b.addEventListener('click', function(){ pickSpot(spot.key); });
+            legend.appendChild(b);
+        });
 
-        document.getElementById('wallLabel').textContent =
-            (alliance === 'red' ? 'RED' : 'BLUE') + ' ALLIANCE WALL · VIEW FROM DRIVE STATION';
         var picked = document.getElementById('startPicked');
+        picked.className = 'slot-picked picked-' + alliance;
         picked.innerHTML = startPos
-            ? 'Starting spot: <b>' + POS_LABEL[startPos] + '</b>'
+            ? 'Starting spot: <b>' + POS_LABEL[startPos] + '</b> · ' + alliance.toUpperCase() + ' side'
             : 'No spot selected yet.';
     }
 
@@ -132,7 +148,9 @@
             document.querySelectorAll('#allianceSeg button').forEach(function(b){
                 b.className = (b.dataset.alliance === alliance) ? ('on-' + alliance) : '';
             });
-            buildSlots();
+            /* the five spot names mean the same thing on either side, so a
+               selection survives an alliance flip — it just moves across */
+            buildStartMap();
         });
     });
 
@@ -288,7 +306,7 @@
             document.getElementById('defenseRating').value = 5;
             document.getElementById('defenseRatingVal').textContent = '5/10';
             chosenTags.clear(); buildTags();
-            startPos = null; buildSlots();
+            startPos = null; buildStartMap();
             ['startPanel','scoringPanel','foulsPanel','defensePanel','breakPanel'].forEach(function(id){
                 document.getElementById(id).classList.remove('disabled-zone');
             });
@@ -303,7 +321,7 @@
 
     /* ---------- boot ---------- */
     buildScoring();
-    buildSlots();
+    buildStartMap();
     buildTags();
     S.wireSteppers(document.getElementById('foulsPanel'));
     S.initEventUI({ allowAll:false, onChange: function(){ prefillMatch(); refreshPitHint(); } });
