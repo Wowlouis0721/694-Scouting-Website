@@ -3,25 +3,25 @@
    All pages link this file. Page files no longer carry big
    inline <style> blocks; edit colors/layout here once.
    ============================================================= */
-:root{
-    --steel-900:#11151a;
-    --steel-800:#1b2127;
-    --steel-700:#262e36;
-    --steel-600:#3a4450;
-    --blueprint:#dd7f7f;
-    --fuel:#ee3f3f;
-    --rust:#c1462f;
-    --ally-blue:#4c8dff;
-    --paper:#eef1ef;
-    --paper-dim:#93a0a6;
-    --radius:4px;
+:root {
+    --steel-900: #0b0e11; /* Dark main background */
+    --steel-800: #161b22; /* Panel background */
+    --steel-700: #21262d; /* Accent/Hover background */
+    --steel-600: #30363d; /* Borders */
+    --blueprint: #dd7f7f;
+    --fuel: #ee3f3f;
+    --rust: #c1462f;
+    --ally-blue: #4c8dff;
+    --paper: #ffffff;    /* Primary text color changed to white */
+    --paper-dim: #c9d1d9;/* Dimmed text color brightened for readability */
+    --radius: 4px;
 }
- 
+
 *{ box-sizing:border-box; }
 html, body{ margin:0; }
 body{
-    background:var(--steel-900);
-    color:var(--paper);
+    background:var(--steel-900) !important;
+    color:var(--paper) !important;
     font-family:'Inter', system-ui, sans-serif;
     -webkit-font-smoothing:antialiased;
 }
@@ -29,7 +29,7 @@ a{ color:var(--blueprint); text-decoration:none; }
  
 /* ===================== NAVBAR ===================== */
 .app-navbar{
-    background:var(--steel-800);
+    background:var(--steel-800) !important;
     border-bottom:1px solid var(--steel-600);
     padding:.7rem 0;
 }
@@ -636,11 +636,12 @@ a{ color:var(--blueprint); text-decoration:none; }
     border-bottom:1px solid var(--steel-600);
     white-space:nowrap;
 }
-.results-table td{
-    padding:10px;
-    border-bottom:1px solid var(--steel-700);
-    font-size:.88rem;
-    vertical-align:top;
+.results-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--steel-700);
+    font-size: .88rem;
+    vertical-align: top;
+    color: var(--paper) !important; /* Forces row text to stay bright white */
 }
 .results-table tr:last-child td{ border-bottom:none; }
 .results-table .num-cell{
@@ -661,13 +662,14 @@ a{ color:var(--blueprint); text-decoration:none; }
     border-bottom:1px solid rgba(238,63,63,.25);
 }
 .results-table tr.rank-1 td:first-child{ border-left:3px solid var(--fuel); padding-left:7px; }
-.results-table tr.detail-row td{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:.74rem;
-    color:var(--paper-dim);
-    background:rgba(0,0,0,.15);
-    border-bottom:1px solid var(--steel-700);
-    padding-top:6px; padding-bottom:10px;
+.results-table tr.detail-row td {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: .74rem;
+    color: var(--paper-dim) !important;
+    background: rgba(0, 0, 0, 0.4); /* Darker detail row background */
+    border-bottom: 1px solid var(--steel-700);
+    padding-top: 6px; 
+    padding-bottom: 10px;
 }
 .ally-red{ color:var(--fuel); font-weight:700; }
 .ally-blue{ color:var(--ally-blue); font-weight:700; }
