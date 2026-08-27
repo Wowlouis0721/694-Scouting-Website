@@ -108,7 +108,7 @@
                 mark.style.left = c.x + '%';
                 mark.style.top = c.y + '%';
                 mark.dataset.pos = spot.key;
-                mark.innerHTML = '<span class="x-glyph">&#10005;</span><span class="x-label"></span>';
+                mark.innerHTML = '<span class="x-dot"></span><span class="x-label"></span>';
                 mark.querySelector('.x-label').textContent = spot.label;
 
                 if(live){
