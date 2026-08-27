@@ -13,34 +13,23 @@
         { key:'s5', label:'Shift 5', num:'05' },
         { key:'s6', label:'Shift 6', num:'06' }
     ];
-    /* Starting positions: a column of 5 on each alliance's side of the field,
-       mirrored — like the marked-up field drawing. Only the zone name is
-       registered (startPos / startPosLabel), same as before; the side is
-       visual only (alliance is already recorded separately).
-       Numbers are percentages of the field image — measured off field.png. */
-    var SIDE_X = { red: 25.0, blue: 74.9 };            // x of each column
-    var ROW_Y  = [16.0, 33.0, 50.0, 66.9, 83.8];       // 5 rows, top → bottom
+    var START_POS = [
+        { key:'btL', glyph:'▤', label:'Behind Trench' },
+        { key:'utL', glyph:'⌒', label:'Under Trench' },
+        { key:'bpL', glyph:'▲', label:'Bump' },
+        { key:'ctr', glyph:'●', label:'Center' },
+        { key:'bpR', glyph:'▲', label:'Bump' },
+        { key:'utR', glyph:'⌒', label:'Under Trench' },
+        { key:'btR', glyph:'▤', label:'Behind Trench' }
+    ];
     var POS_LABEL = {
-        ltr:'Left Trench', lbp:'Left Bump', hub:'Hub',
-        rbp:'Right Bump', rtr:'Right Trench'
+        btL:'Behind Trench L', utL:'Under Trench L', bpL:'Bump L', ctr:'Center',
+        bpR:'Bump R', utR:'Under Trench R', btR:'Behind Trench R'
     };
-    /* top→bottom order per side: "left" is from that alliance's drive station,
-       so the blue column reads mirrored */
-    var SIDE_ORDER = {
-        red:  ['ltr','lbp','hub','rbp','rtr'],
-        blue: ['rtr','rbp','hub','lbp','ltr']
-    };
-    var START_POS = [];
-    ['red','blue'].forEach(function(side){
-        SIDE_ORDER[side].forEach(function(key, i){
-            START_POS.push({ key:key, side:side, label:POS_LABEL[key], x:SIDE_X[side], y:ROW_Y[i] });
-        });
-    });
     var BREAK_TAGS = ['Intake','Shooter','Hopper','Drivetrain','Climber','Electrical','Radio/Comms','Tipped','Other'];
 
     var alliance = 'red';
     var startPos = null;
-    var startSide = null;
     var chosenTags = new Set();
 
     /* ---------- scoring table ---------- */
@@ -70,44 +59,80 @@
         return Math.max(0, parseInt((el && el.value) || '0', 10) || 0);
     }
 
-    /* ---------- starting position (X marks on the field map) ---------- */
-    function buildFieldMarkers(){
-        var holder = document.getElementById('fieldMarkers');
+    /* ---------- starting position: X markers on a scalable field map ---------- */
+    /* Cell centres of a 7-column grid — the labels use the same grid, so each
+       X sits exactly above its own label at every screen width. */
+    var COLS = [7.143, 21.429, 35.714, 50, 64.286, 78.571, 92.857];
+
+    function buildSlots(){
+        var holder = document.getElementById('startSlots');
+        var order = alliance === 'blue' ? START_POS.slice().reverse() : START_POS;
+        holder.className = 'fieldmap';
         holder.innerHTML = '';
-        START_POS.forEach(function(p){
-            var isSel = (startPos === p.key && startSide === p.side);
-            var b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'field-x' + (isSel ? (' is-sel ally-' + alliance) : '');
-            b.style.left = p.x + '%';
-            b.style.top = p.y + '%';
-            b.dataset.pos = p.key;
-            b.dataset.side = p.side;
-            b.setAttribute('aria-label', p.label + ' starting position, ' + p.side + ' side');
-            b.setAttribute('aria-pressed', isSel ? 'true' : 'false');
-            b.innerHTML = '<span class="x-glyph">✕</span><span class="x-label">' + p.label.toUpperCase() + '</span>';
-            b.addEventListener('click', function(){
-                if(startPos === p.key && startSide === p.side){
-                    startPos = null; startSide = null;
-                } else {
-                    startPos = p.key; startSide = p.side;
-                }
-                buildFieldMarkers();
-            });
-            holder.appendChild(b);
+
+        function pick(key){
+            return function(){
+                startPos = (startPos === key) ? null : key;
+                buildSlots();
+            };
+        }
+
+        var field = document.createElement('div');
+        field.className = 'fm-field ' + (alliance === 'blue' ? 'is-blue' : 'is-red');
+        field.innerHTML =
+            '<div class="fm-trench fm-trench-l"></div>' +
+            '<div class="fm-trench fm-trench-r"></div>' +
+            '<div class="fm-bump fm-bump-l"></div>' +
+            '<div class="fm-bump fm-bump-r"></div>' +
+            '<div class="fm-center"></div>' +
+            '<div class="fm-wall"></div>';
+
+        var labels = document.createElement('div');
+        labels.className = 'fm-labels';
+
+        order.forEach(function(p, i){
+            var sel = (startPos === p.key);
+
+            var mark = document.createElement('button');
+            mark.type = 'button';
+            mark.className = 'fm-mark' + (sel ? (' sel-' + alliance) : '');
+            mark.style.left = COLS[i] + '%';
+            mark.dataset.pos = p.key;
+            mark.setAttribute('aria-label', POS_LABEL[p.key]);
+            mark.setAttribute('aria-pressed', sel ? 'true' : 'false');
+            mark.innerHTML = '<span class="fm-x"></span>';
+            mark.addEventListener('click', pick(p.key));
+            field.appendChild(mark);
+
+            var label = document.createElement('button');
+            label.type = 'button';
+            label.className = 'fm-label' + (sel ? (' on-' + alliance) : '');
+            label.dataset.pos = p.key;
+            label.textContent = p.label;
+            label.setAttribute('aria-hidden', 'true');
+            label.tabIndex = -1;
+            label.addEventListener('click', pick(p.key));
+            labels.appendChild(label);
         });
+
+        holder.appendChild(field);
+        holder.appendChild(labels);
+
+        document.getElementById('wallLabel').textContent =
+            (alliance === 'red' ? 'RED' : 'BLUE') + ' ALLIANCE WALL · VIEW FROM DRIVE STATION';
         var picked = document.getElementById('startPicked');
         picked.innerHTML = startPos
             ? 'Starting spot: <b>' + POS_LABEL[startPos] + '</b>'
             : 'No spot selected yet.';
     }
+
     document.querySelectorAll('#allianceSeg button').forEach(function(btn){
         btn.addEventListener('click', function(){
             alliance = btn.dataset.alliance;
             document.querySelectorAll('#allianceSeg button').forEach(function(b){
                 b.className = (b.dataset.alliance === alliance) ? ('on-' + alliance) : '';
             });
-            buildFieldMarkers();
+            buildSlots();
         });
     });
 
@@ -263,7 +288,7 @@
             document.getElementById('defenseRating').value = 5;
             document.getElementById('defenseRatingVal').textContent = '5/10';
             chosenTags.clear(); buildTags();
-            startPos = null; startSide = null; buildFieldMarkers();
+            startPos = null; buildSlots();
             ['startPanel','scoringPanel','foulsPanel','defensePanel','breakPanel'].forEach(function(id){
                 document.getElementById(id).classList.remove('disabled-zone');
             });
@@ -278,7 +303,7 @@
 
     /* ---------- boot ---------- */
     buildScoring();
-    buildFieldMarkers();
+    buildSlots();
     buildTags();
     S.wireSteppers(document.getElementById('foulsPanel'));
     S.initEventUI({ allowAll:false, onChange: function(){ prefillMatch(); refreshPitHint(); } });
