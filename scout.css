@@ -354,28 +354,27 @@ a{ color:var(--blueprint); text-decoration:none; }
 #fieldMarkers{ position:absolute; inset:0; line-height:1; }
 
 .field-x{
+    /* --dot is the dot's diameter; the padding around it is the tap target */
+    --dot: clamp(9px, 1.35vw, 17px);
     position:absolute;
     transform:translate(-50%,-50%);
     background:none; border:0;
-    padding:3px;
+    padding:clamp(4px, .7vw, 9px);
     cursor:pointer;
-    display:flex; flex-direction:column; align-items:center; gap:3px;
+    display:flex; flex-direction:column; align-items:center; gap:6px;
     -webkit-tap-highlight-color:transparent;
 }
-.field-x .x-glyph{
-    font-family:'Oswald', sans-serif;
-    font-weight:700;
-    font-size:clamp(15px, 2.4vw, 26px);
-    line-height:1;
-    width:1.5em; height:1.5em;
+.field-x .x-dot{
+    display:block;
+    width:var(--dot); height:var(--dot);
     border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    background:rgba(255,255,255,.92);
-    box-shadow:0 0 0 2px currentColor, 0 1px 4px rgba(0,0,0,.35);
+    background:currentColor;
+    /* thin white rim keeps the dot readable over the white field art */
+    box-shadow:0 0 0 1.5px rgba(255,255,255,.95), 0 1px 3px rgba(0,0,0,.4);
     transition:transform .12s ease, box-shadow .12s ease;
 }
-.field-x.ally-red  .x-glyph{ color:#ee3f3f; }
-.field-x.ally-blue .x-glyph{ color:#1f57c0; }
+.field-x.ally-red { color:#ee3f3f; }
+.field-x.ally-blue{ color:#1f57c0; }
 .field-x .x-label{
     font-family:'IBM Plex Mono', monospace;
     font-size:clamp(7px, 1.15vw, 11px);
@@ -387,15 +386,16 @@ a{ color:var(--blueprint); text-decoration:none; }
     border-radius:3px;
     white-space:nowrap;
 }
-.field-x.is-live:hover .x-glyph{ transform:scale(1.15); }
+.field-x.is-live:hover .x-dot{ transform:scale(1.25); }
 
 /* the other alliance's five points stay on the map for context, faded out */
 .field-x.is-ghost{ opacity:.25; cursor:default; pointer-events:none; }
 .field-x.is-ghost .x-label{ display:none; }
 
-.field-x.is-sel .x-glyph{
-    transform:scale(1.18);
-    box-shadow:0 0 0 3px currentColor, 0 0 0 7px rgba(255,255,255,.6);
+/* selected: same dot, ringed in its alliance colour */
+.field-x.is-sel .x-dot{
+    transform:scale(1.25);
+    box-shadow:0 0 0 2px #fff, 0 0 0 5px currentColor, 0 1px 4px rgba(0,0,0,.45);
 }
 .field-x.is-sel .x-label{ color:#fff; font-weight:700; }
 .field-x.is-sel.ally-red  .x-label{ background:#ee3f3f; }
@@ -909,12 +909,10 @@ img, svg, video, canvas{ max-width:100%; height:auto; }
     .field-x .x-label{ display:none; }
     /* the map is only ~140px tall on a phone, so the dots shrink to stay
        clear of each other — the legend buttons are the real tap targets */
-    .field-x{ padding:2px; }
-    .field-x .x-glyph{
-        font-size:11px;
-        box-shadow:0 0 0 1.5px currentColor, 0 1px 3px rgba(0,0,0,.35);
+    .field-x{ padding:6px; }
+    .field-x.is-sel .x-dot{
+        box-shadow:0 0 0 1.5px #fff, 0 0 0 3.5px currentColor, 0 1px 3px rgba(0,0,0,.45);
     }
-    .field-x.is-sel .x-glyph{ box-shadow:0 0 0 2px currentColor, 0 0 0 4px rgba(255,255,255,.6); }
     .start-legend{ gap:4px; }
     .legend-spot{ padding:10px 1px; }
 
